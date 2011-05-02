@@ -550,8 +550,6 @@ neon.widget = (function() {
 				rawurl : neon.loaddir+rawurl,
 			teardowns = [];
 
-		alert(imageurl);
-
 		var setupeditor = function(container) {
 			var
 				original = neon.select(container[0].nextSibling),
