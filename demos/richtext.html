@@ -4,12 +4,14 @@
 
 <head>
 	<title>Rich text editor test</title>
-<script type="text/javascript" src="neon.js"></script>
+<script type="text/javascript" src="../neonjs/neon.js"></script>
 <script type="text/javascript">
 
-neon.load('neon.widget.js', function() {
+neon.loaddir = '../neonjs/modules/';
+
+neon.load('../../neon.widget.js', function() {
 	neon.select('.richtext').widget('richtext');
-	});
+});
 
 </script>
 </head>
