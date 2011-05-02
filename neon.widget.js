@@ -440,6 +440,7 @@ neon.widget = (function() {
 								currentsel + 1) :
 							(currentsel ? currentsel - 1 : options.length - 1)
 						);
+					evt.preventDefault();
 				}
 				if (evt.which === 32 || evt.which === 13) {
 					if (currentsel !== null) {
