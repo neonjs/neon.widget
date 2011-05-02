@@ -545,7 +545,12 @@ neon.widget = (function() {
 			container = el.insert({div:''})
 				.addClass('neon-widget-richtext'),
 			iconsize = myopts.iconsize || 14,
+			rawurl = opts.imageurl || 'images/neon-widget-richtext.png',
+			imageurl = (/^[^\/?#]+:|^\//).test(rawurl) ?
+				rawurl : neon.loaddir+rawurl,
 			teardowns = [];
+
+		alert(imageurl);
 
 		var setupeditor = function(container) {
 			var
@@ -646,7 +651,8 @@ neon.widget = (function() {
 					.style('width', iconsize+"px")
 					.style('height', iconsize+"px")
 					.style('background', 
-						'url(images/neon-widget-richtext.png) -1px -'+((iconsize+2)*iconnum+1)+'px');
+						'url('+imageurl+
+							') -1px -'+((iconsize+2)*iconnum+1)+'px');
 				button.watch('click', onclick);
 				button.watch('keypress', onkeypress);
 				teardowns.push(function() {
@@ -694,7 +700,8 @@ neon.widget = (function() {
 					.style('width', iconsize+"px")
 					.style('height', iconsize+"px")
 					.style('background',
-						'url(images/neon-widget-richtext.png) -1px -'+((iconsize+2)*9+1)+'px');
+						'url('+imageurl+
+							') -1px -'+((iconsize+2)*9+1)+'px');
 
 				selections.append({p:{a:"Normal"}});
 				selections.append({h1:{a:"Heading 1"}});

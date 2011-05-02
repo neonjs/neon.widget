@@ -10,7 +10,9 @@
 neon.loaddir = '../neonjs/modules/';
 
 neon.load('../../neon.widget.js', function() {
-	neon.select('.richtext').widget('richtext');
+	neon.select('.richtext').widget('richtext', {
+		imageurl: '../../images/neon-widget-richtext.png'
+	});
 });
 
 </script>
