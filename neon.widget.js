@@ -441,11 +441,13 @@ neon.widget = (function() {
 							(currentsel ? currentsel - 1 : options.length - 1)
 						);
 					evt.preventDefault();
+					evt.stopPropagation();
 				}
 				if (evt.which === 32 || evt.which === 13) {
 					if (currentsel !== null) {
 						select(neon.select(options[currentsel]));
 						evt.preventDefault();
+						evt.stopPropagation();
 					}
 				}
 			};
@@ -527,7 +529,7 @@ neon.widget = (function() {
 	};
 
 	neon.styleRule('.neon-widget-flyoutMenu',
-		'background:#fff;color:#000;min-width:8em;max-height:400px;overflow:auto')
+		'background:#fff;color:#000;min-width:8em')
 		.styleRule('.neon-widget-flyoutMenu-item',
 			'display:block;text-decoration:none;color:MenuText;padding:3px 5px;cursor:default')
 		.styleRule('.neon-widget-flyoutMenu-selected',
