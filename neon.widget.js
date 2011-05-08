@@ -562,6 +562,7 @@ neon.widget = (function() {
 					.addClass('neon-widget-richtext-toolbar'),
 				source,
 				savedselection = null,
+				hiddenfield, form,
 				updators = [];
 
 			var getrange = function() {
@@ -739,6 +740,11 @@ neon.widget = (function() {
 				
 			};
 
+			var updatehiddenfield = function() {
+				hiddenfield[0].value = htmlconvert(
+					editor[0][canedit ? 'innerHTML' : 'value'], 0, !canedit);
+			};
+
 			// now populate the toolbar
 			
 			if (!canedit) {
@@ -778,12 +784,18 @@ neon.widget = (function() {
 
 			if (original[0].tagName.toLowerCase() === 'textarea') {
 				source = original[0].value;
-				container.append({
+				hiddenfield = container.append({
 					input:'',
 					$type:'hidden',
 					$name:original[0].name,
 					$value:el[0].value
 					});
+				form = neon.select(hiddenfield[0].form);
+				form.watch('submit', updatehiddenfield);
+				teardowns.push(function() {
+					updatehiddenfield();
+					form.unwatch('submit', updatehiddenfield);
+				});
 			}
 			else {
 				source = original[0].innerHTML;
