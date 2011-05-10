@@ -187,11 +187,20 @@ neon.widget = (function() {
 		return output.replace(/^\s+|\s+$/g, '');
 	};
 
-	var cloneobject = function(obj) {
+	var extendobject = function(obj, extension) {
 		var
-			Constructor = function() {};
+			Constructor = function() {},
+			name, newobj;
 		Constructor.prototype = obj;
-		return new Constructor();
+		newobj = new Constructor();
+		if (extension) {
+			for (name in extension) {
+				if (extension.hasOwnProperty(name)) {
+					newobj[name] = extension[name];
+				}
+			}
+		}
+		return newobj;
 	};
 
 	/*******************************************
@@ -233,7 +242,6 @@ neon.widget = (function() {
 				.style('top', horiz ? '0' : '100%')
 				.style('left', horiz ? '100%' : '0')
 				.style('right', 'auto').style('bottom', 'auto') 
-				.style('opacity', '1') 
 				.getPosition();
 			hostpos = host.getPosition();
 			flyout.style('top', 'auto').style('left', 'auto');
@@ -251,6 +259,11 @@ neon.widget = (function() {
 				windowpos.bottom+addrect-hostpos.bottom < dim ? 'bottom' :
 				/t/.test(direction) ? 'bottom' : 'top',
 				!horiz ? '100%' : '0');
+
+			if (myopts.fade) {
+				flyout.style('opacity', flyout.getStyle('opacity') || '0', '1',
+					myopts.fade > 1 ? myopts.fade : 200, 'out');
+			}
 
 			if (myopts.onfocus) {
 				myopts.onfocus.call(host);
@@ -274,8 +287,8 @@ neon.widget = (function() {
 				if (fuzz === element) {
 					flyout = neon.select(element.firstChild.nextSibling);
 					if (myopts.fade) {
-						flyout.style('opacity', '1', '0',
-							myopts.fade > 1 ? myopts.fade : null, null, function() {
+						flyout.style('opacity', flyout.getStyle('opacity') || '1', '0',
+							myopts.fade > 1 ? myopts.fade : 400, 'out', function() {
 							flyout.addClass("neon-widget-flyout-hidden");
 						});
 					}
@@ -332,6 +345,10 @@ neon.widget = (function() {
 
 		flyouts.append(myopts.contents || []);
 
+		if (myopts.fade) {
+			flyouts.style('opacity', '0');
+		}
+
 		// add events
 	
 		hosts.watch(myopts.hover ? "mouseenter" : "focusin", onfocusin);
@@ -386,7 +403,6 @@ neon.widget = (function() {
 		var setupmenu = function(el) {
 			var
 				i,
-				opts,
 				obj,
 				flyout, host, options,
 				currentsel = null;
@@ -404,10 +420,10 @@ neon.widget = (function() {
 			};
 
 			var select = function(el) {
-				if (opts.onselect) {
-					opts.onselect(el);
+				if (myopts.onselect) {
+					myopts.onselect(el);
 				}
-				if (!opts.remainafterselect) {
+				if (!myopts.remainafterselect) {
 					obj.blur();
 				}
 			};
@@ -452,9 +468,7 @@ neon.widget = (function() {
 				}
 			};
 
-			opts = cloneobject(myopts);
-			opts.onblur = onblur;
-			obj = widgets.flyout(el, opts);
+			obj = widgets.flyout(el, extendobject(myopts, {onblur:onblur}));
 			objects.push(obj);
 			flyout = obj.flyout
 				.addClass('neon-widget-flyoutMenu');
@@ -473,7 +487,6 @@ neon.widget = (function() {
 				options.unwatch('mouseenter', onmouseenter)
 					.unwatch('click', onclick);
 				flyout.unwatch('mouseleave', onmouseleave);
-				
 			});
 			
 		};
@@ -499,31 +512,6 @@ neon.widget = (function() {
 		};
 
 		obj.flyout = neon.select(flyouts);
-
-			
-/*
-		for (i = flyouts.length; i--;) {
-			tmp = flyouts[i].getElementsByTagName(myopts.optiontag || "a");
-			for (j = 0, len = tmp.length; j < len; j++) {
-				collect.push(tmp[j]);
-			}
-			setupchooser(neon.select(flyouts[i]), neon.select(tmp));
-		}
-
-		links = neon.select(collect)
-			.setAttribute('tabindex', '-1');
-
-		links.watch('click', function(evt) {
-			if (myopts.onmenuselect) {
-				myopts.onmenuselect.call(this, evt);
-				evt.preventDefault();
-			}
-			if (!myopts.remainafterselect) {
-				obj.blur();
-			}
-		});
-
-		*/
 
 		return obj;
 	};
@@ -717,8 +705,8 @@ neon.widget = (function() {
 						.addClass("neon-widget-richtext-toolbar-styleelement");
 				}
 				
-				menu = widgets.flyoutMenu(chooser, {contents:selections,
-					onselect:onselect});
+				menu = widgets.flyoutMenu(chooser, extendobject(myopts,
+					{contents: selections, onselect: onselect}));
 
 				teardowns.push(function() {
 					menu.teardown();
