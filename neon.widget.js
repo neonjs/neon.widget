@@ -667,6 +667,29 @@ neon.widget = (function() {
 					.addClass('neon-widget-richtext-toolbar-separator');
 			};
 
+			var addlinkchooser = function() {
+				var
+					chooser = toolbar.append({span:'',$title:'Web link'})
+						.setAttribute('tabindex', '0')
+						.addClass('neon-widget-richtext-toolbar-selectable'),
+					flyoutform = neon.build({div:[
+						{p:["Link address:",{input:null}]}
+						]}),
+					flyout;
+
+				chooser.append({span:""})
+					.addClass('neon-widget-richtext-toolbar-icon')
+					.style('width', iconsize+"px")
+					.style('height', iconsize+"px")
+					.style('background', 
+						'url('+imageurl+
+							') -1px -'+((iconsize+2)*6)+'px');
+
+				flyout = widgets.flyout(chooser, extendobject(myopts,
+					{contents: flyoutform}));
+
+			};
+
 			var addstylechooser = function() {
 				var
 					i,
@@ -756,6 +779,11 @@ neon.widget = (function() {
 					addbutton('outdent', 4, 'Decrease indent');
 					addbutton('indent', 5, 'Increase indent');
 				}
+				if (myopts.linkchooser || myopts.linkchooser === undefined) {
+					addseparator();
+					addlinkchooser();
+				}
+
 
 				// strangely in IE6 (and 7?) the following capital E is important
 				editor.setAttribute('contentEditable', 'true');
