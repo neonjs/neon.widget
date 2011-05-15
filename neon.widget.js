@@ -685,8 +685,8 @@ neon.widget = (function() {
 
 				chooser.append(geticon(6));
 
-				flyoutform.append({div:["Link address",urlinput]});
-				flyoutform.append({div:["Hover text",titleinput]});
+				flyoutform.append({div:[{label:"Link address"},urlinput]});
+				flyoutform.append({div:[{label:"Hover text"},titleinput]});
 				flyoutform.append({div:submitbutton})
 					.addClass('neon-widget-richtext-flyoutform-buttonrow');
 
@@ -696,7 +696,7 @@ neon.widget = (function() {
 
 			var addtablechooser = function() {
 				var
-					chooser = toolbar.append({span:'',$title:'Web link'})
+					chooser = toolbar.append({span:'',$title:'Table'})
 						.setAttribute('tabindex', '0')
 						.addClass('neon-widget-richtext-toolbar-selectable'),
 					flyoutform = neon.build({div:null})
@@ -708,14 +708,36 @@ neon.widget = (function() {
 
 				chooser.append(geticon(8));
 
-				flyoutform.append({div:["Columns",columnsinput]});
-				flyoutform.append({div:["Rows",rowsinput]});
+				flyoutform.append({div:[{label:"Columns"},columnsinput]});
+				flyoutform.append({div:[{label:"Rows"},rowsinput]});
 				flyoutform.append({div:submitbutton})
 					.addClass('neon-widget-richtext-flyoutform-buttonrow');
 
 				flyout = widgets.flyout(chooser, extendobject(myopts,
 					{contents: flyoutform}));
 			};
+
+			var addimagechooser = function() {
+				var
+					chooser = toolbar.append({span:'',$title:'Web link'})
+						.setAttribute('tabindex', '0')
+						.addClass('neon-widget-richtext-toolbar-selectable'),
+					flyoutform = neon.build({div:null})
+						.addClass('neon-widget-richtext-flyoutform'),
+					urlinput = neon.build({input:null,$size:24}),
+					submitbutton = neon.build({button:"Add image"}),
+					flyout;
+
+				chooser.append(geticon(7));
+
+				flyoutform.append({div:[{label:"Image address"},urlinput]});
+				flyoutform.append({div:submitbutton})
+					.addClass('neon-widget-richtext-flyoutform-buttonrow');
+
+				flyout = widgets.flyout(chooser, extendobject(myopts,
+					{contents: flyoutform}));
+			};
+
 			var addstylechooser = function() {
 				var
 					i,
@@ -803,6 +825,10 @@ neon.widget = (function() {
 					addseparator();
 					addlinkchooser();
 				}
+				if (myopts.imagechooser || myopts.imagechooser === undefined) {
+					addseparator();
+					addimagechooser();
+				}
 				if (myopts.tablecreator || myopts.tablecreator === undefined) {
 					addseparator();
 					addtablechooser();
@@ -882,13 +908,9 @@ neon.widget = (function() {
 		.styleRule('.neon-widget-richtext-toolbar-altnotice',
 			'padding:5px;text-align:right')
 		.styleRule('.neon-widget-richtext-flyoutform',
-			'background:#f9f6f3')
-		.styleRule('.neon-widget-richtext-flyoutform div',
-			'padding:3px 5px')
+			'background:#f9f6f3;padding:3px 5px')
 		.styleRule('.neon-widget-richtext-flyoutform-buttonrow',
-			'text-align:right')
-		.styleRule('.neon-widget-richtext-flyoutform-buttonrow button',
-			'white-space:nowrap')
+			'text-align:right;margin-top:5px')
 		.styleRule('.neon-widget-richtext-toolbar-icon',
 			'display:inline-block;vertical-align:middle')
 		.styleRule('.neon-widget-richtext-toolbar-sideicon',
