@@ -615,6 +615,16 @@ neon.widget = (function() {
 				document.execCommand(command, false, param);
 			};
 
+			var geticon = function(iconnum) {
+				return neon.build({span:""})
+					.addClass('neon-widget-richtext-toolbar-icon')
+					.style('width', iconsize+"px")
+					.style('height', iconsize+"px")
+					.style('background', 
+						'url('+imageurl+
+							') -1px -'+((iconsize+2)*iconnum+1)+'px');
+			};
+
 			var addbutton = function(command, iconnum, title) {
 				var
 					button = toolbar.append({span:'',$title:title})
@@ -636,13 +646,7 @@ neon.widget = (function() {
 					}
 				};
 
-				button.append({span:""})
-					.addClass('neon-widget-richtext-toolbar-icon')
-					.style('width', iconsize+"px")
-					.style('height', iconsize+"px")
-					.style('background', 
-						'url('+imageurl+
-							') -1px -'+((iconsize+2)*iconnum+1)+'px');
+				button.append(geticon(iconnum));
 				button.watch('click', onclick);
 				button.watch('keypress', onkeypress);
 				teardowns.push(function() {
@@ -672,24 +676,46 @@ neon.widget = (function() {
 					chooser = toolbar.append({span:'',$title:'Web link'})
 						.setAttribute('tabindex', '0')
 						.addClass('neon-widget-richtext-toolbar-selectable'),
-					flyoutform = neon.build({div:[
-						{p:["Link address:",{input:null}]}
-						]}),
+					flyoutform = neon.build({div:null})
+						.addClass('neon-widget-richtext-flyoutform'),
+					urlinput = neon.build({input:null,$size:24}),
+					titleinput = neon.build({input:null,$size:24}),
+					submitbutton = neon.build({button:"Add link"}),
 					flyout;
 
-				chooser.append({span:""})
-					.addClass('neon-widget-richtext-toolbar-icon')
-					.style('width', iconsize+"px")
-					.style('height', iconsize+"px")
-					.style('background', 
-						'url('+imageurl+
-							') -1px -'+((iconsize+2)*6)+'px');
+				chooser.append(geticon(6));
+
+				flyoutform.append({div:["Link address",urlinput]});
+				flyoutform.append({div:["Hover text",titleinput]});
+				flyoutform.append({div:submitbutton})
+					.addClass('neon-widget-richtext-flyoutform-buttonrow');
 
 				flyout = widgets.flyout(chooser, extendobject(myopts,
 					{contents: flyoutform}));
-
 			};
 
+			var addtablechooser = function() {
+				var
+					chooser = toolbar.append({span:'',$title:'Web link'})
+						.setAttribute('tabindex', '0')
+						.addClass('neon-widget-richtext-toolbar-selectable'),
+					flyoutform = neon.build({div:null})
+						.addClass('neon-widget-richtext-flyoutform'),
+					columnsinput = neon.build({input:null,$size:6}),
+					rowsinput = neon.build({input:null,$size:6}),
+					submitbutton = neon.build({button:"Create table"}),
+					flyout;
+
+				chooser.append(geticon(8));
+
+				flyoutform.append({div:["Columns",columnsinput]});
+				flyoutform.append({div:["Rows",rowsinput]});
+				flyoutform.append({div:submitbutton})
+					.addClass('neon-widget-richtext-flyoutform-buttonrow');
+
+				flyout = widgets.flyout(chooser, extendobject(myopts,
+					{contents: flyoutform}));
+			};
 			var addstylechooser = function() {
 				var
 					i,
@@ -707,14 +733,8 @@ neon.widget = (function() {
 					updatecontrols();
 				};
 
-				chooser.append({span:""}) // drop arrow icon
-					.addClass('neon-widget-richtext-toolbar-icon')
-					.addClass('neon-widget-richtext-toolbar-sideicon')
-					.style('width', iconsize+"px")
-					.style('height', iconsize+"px")
-					.style('background',
-						'url('+imageurl+
-							') -1px -'+((iconsize+2)*9+1)+'px');
+				chooser.append(geticon(9)) // drop arrow icon
+					.addClass('neon-widget-richtext-toolbar-sideicon');
 
 				selections.append({p:{a:"Normal"}});
 				selections.append({h1:{a:"Heading 1"}});
@@ -783,7 +803,10 @@ neon.widget = (function() {
 					addseparator();
 					addlinkchooser();
 				}
-
+				if (myopts.tablecreator || myopts.tablecreator === undefined) {
+					addseparator();
+					addtablechooser();
+				}
 
 				// strangely in IE6 (and 7?) the following capital E is important
 				editor.setAttribute('contentEditable', 'true');
@@ -858,6 +881,14 @@ neon.widget = (function() {
 			'width:100%;border:0;padding:0;margin:0;background:#fff;color:#000;font:inherit;min-height:14em')
 		.styleRule('.neon-widget-richtext-toolbar-altnotice',
 			'padding:5px;text-align:right')
+		.styleRule('.neon-widget-richtext-flyoutform',
+			'background:#f9f6f3')
+		.styleRule('.neon-widget-richtext-flyoutform div',
+			'padding:3px 5px')
+		.styleRule('.neon-widget-richtext-flyoutform-buttonrow',
+			'text-align:right')
+		.styleRule('.neon-widget-richtext-flyoutform-buttonrow button',
+			'white-space:nowrap')
 		.styleRule('.neon-widget-richtext-toolbar-icon',
 			'display:inline-block;vertical-align:middle')
 		.styleRule('.neon-widget-richtext-toolbar-sideicon',
