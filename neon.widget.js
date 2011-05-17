@@ -132,12 +132,14 @@ neon.widget = (function() {
 					}
 				}
 				// remove leading spaces
-				if (lastdelta || !last || //!pinitially || 
+				if (lastdelta || !last ||
+					!topstack || topstack === 'blockquote' || topstack === 'center' ||
 					last === 'p' || last === 'br' || blockseparator.test(last)) {
 					text = text.replace(/^\s+/, '');
 				}
 				// remove trailing spaces
-				if (delta || !tagname || //!popen ||
+				if (delta || !tagname ||
+					!topstack || topstack === 'blockquote' || topstack === 'center' ||
 					tagname === 'p' || tagname === 'br' || blockseparator.test(tagname)) {
 					text = text.replace(/\s+$/, '');
 				}
