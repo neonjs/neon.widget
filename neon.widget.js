@@ -132,12 +132,12 @@ neon.widget = (function() {
 					}
 				}
 				// remove leading spaces
-				if (lastdelta || !last || !pinitially || 
+				if (lastdelta || !last || //!pinitially || 
 					last === 'p' || last === 'br' || blockseparator.test(last)) {
 					text = text.replace(/^\s+/, '');
 				}
 				// remove trailing spaces
-				if (delta || !tagname || !popen ||
+				if (delta || !tagname || //!popen ||
 					tagname === 'p' || tagname === 'br' || blockseparator.test(tagname)) {
 					text = text.replace(/\s+$/, '');
 				}
@@ -156,7 +156,7 @@ neon.widget = (function() {
 				if (
 					delta === 1 || (!popen && tagname === '!') || 
 					(!closetag && (tagname === 'p' || blockseparator.test(tagname))) || 
-					(closetag && (tagname === 'table' || tagname === 'ul'))
+					(closetag && (tagname === 'table' || tagname === 'ul' || tagname === 'ol' || tagname === 'dl'))
 					) {
 					text += "\n";
 				}
@@ -544,10 +544,18 @@ neon.widget = (function() {
 		var setupeditor = function(container) {
 			var
 				original = neon.select(container[0].nextSibling),
+				toolbar = container.append({div:''})
+					.addClass('neon-widget-richtext-toolbar'),
 				editor = container.append(canedit ? {div:''} : {textarea:''})
 					.addClass('neon-widget-richtext-editor'),
-				toolbar = editor.insert({div:''})
-					.addClass('neon-widget-richtext-toolbar'),
+				htmltoolbar = canedit && myopts.htmlmode ? container.append({div:''})
+					.style('display', 'none')
+					.addClass('neon-widget-richtext-toolbar') : null,
+				htmleditor = canedit && myopts.htmlmode ?
+					container.append({textarea:''})
+					.style('display', 'none')
+					.addClass('neon-widget-richtext-editor') : null,
+				htmlmode = false,
 				source,
 				savedselection = null,
 				hiddenfield, form,
@@ -671,6 +679,42 @@ neon.widget = (function() {
 					.addClass('neon-widget-richtext-toolbar-separator');
 			};
 
+			var addhtmlbutton = function() {
+				var
+					button = toolbar.append({span:{span:"HTML"},$title:"Edit as HTML"})
+						.setAttribute('tabindex', '0')
+						.addClass('neon-widget-richtext-toolbar-selectable'),
+					offbutton = htmltoolbar.append({span:{span:"Exit HTML mode"},$title:"Return to normal editing mode"})
+						.setAttribute('tabindex', '0')
+						.addClass('neon-widget-richtext-toolbar-selectable');
+
+				var onclick = function() {
+					htmltoolbar.style('display', 'block');
+					htmleditor.style('display', 'block');
+					htmleditor[0].value = htmlconvert(editor[0].innerHTML);
+					htmlmode = true;
+					htmleditor.style('height', editor.getStyle('height'));
+					toolbar.style('display', 'none');
+					editor.style('display', 'none');
+				};
+
+				var onclickoff = function() {
+					toolbar.style('display', 'block');
+					editor.style('display', 'block');
+					editor[0].innerHTML = htmlconvert(htmleditor[0].value);
+					htmlmode = false;
+					htmltoolbar.style('display', 'none');
+					htmleditor.style('display', 'none');
+				};
+
+				button.watch('click', onclick);
+				offbutton.watch('click', onclickoff);
+				teardowns.push(function() {
+					button.unwatch('click', onclick);
+					offbutton.unwatch('click', onclickoff);
+				});
+			};
+
 			var addlinkchooser = function() {
 				var
 					chooser = toolbar.append({span:'',$title:'Web link'})
@@ -719,7 +763,7 @@ neon.widget = (function() {
 
 			var addimagechooser = function() {
 				var
-					chooser = toolbar.append({span:'',$title:'Web link'})
+					chooser = toolbar.append({span:'',$title:'Image'})
 						.setAttribute('tabindex', '0')
 						.addClass('neon-widget-richtext-toolbar-selectable'),
 					flyoutform = neon.build({div:null})
@@ -793,15 +837,21 @@ neon.widget = (function() {
 				
 			};
 
+			var getvalue = function() {
+				return htmlconvert(
+					htmlmode ? htmleditor[0].value :
+					canedit ? editor[0].innerHTML :
+					editor[0].value, 0, !htmlmode && !canedit);
+			};
+
 			var updatehiddenfield = function() {
-				hiddenfield[0].value = htmlconvert(
-					editor[0][canedit ? 'innerHTML' : 'value'], 0, !canedit);
+				hiddenfield[0].value = getvalue();
 			};
 
 			// now populate the toolbar
 			
 			if (!canedit) {
-				toolbar.append({div:"HTML tags allowed"})
+				toolbar.append({div:"HTML tags accepted"})
 					.addClass('neon-widget-richtext-toolbar-altnotice');
 			}
 			else {
@@ -813,8 +863,8 @@ neon.widget = (function() {
 				addbutton('italic', 1, 'Italic');
 				if (myopts.listbuttons || myopts.listbuttons === undefined) {
 					addseparator();
-					addbutton('insertunorderedlist', 2, 'Insert bulleted list');
-					addbutton('insertorderedlist', 3, 'Insert numbered list');
+					addbutton('insertunorderedlist', 2, 'Bulleted list');
+					addbutton('insertorderedlist', 3, 'Numbered list');
 				}
 				if (myopts.indentbuttons || myopts.indentbuttons === undefined) {
 					addseparator();
@@ -832,6 +882,10 @@ neon.widget = (function() {
 				if (myopts.tablecreator || myopts.tablecreator === undefined) {
 					addseparator();
 					addtablechooser();
+				}
+				if (myopts.htmlmode) {
+					addseparator();
+					addhtmlbutton();
 				}
 
 				// strangely in IE6 (and 7?) the following capital E is important

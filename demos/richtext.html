@@ -12,7 +12,8 @@ neon.loaddir = '../neonjs/modules/';
 neon.load('../../neon.widget.js', function() {
 	neon.select('.richtext').widget('richtext', {
 		imageurl: '../../images/neon-widget-richtext.png',
-		fade: true
+		fade: true,
+		htmlmode: true
 	});
 });
 
