@@ -133,13 +133,15 @@ neon.widget = (function() {
 				}
 				// remove leading spaces
 				if (lastdelta || !last ||
-					!topstack || topstack === 'blockquote' || topstack === 'center' ||
+					(!pinitially && (!topstack || topstack === 'blockquote' ||
+						topstack === 'center')) ||
 					last === 'p' || last === 'br' || blockseparator.test(last)) {
 					text = text.replace(/^\s+/, '');
 				}
 				// remove trailing spaces
 				if (delta || !tagname ||
-					!topstack || topstack === 'blockquote' || topstack === 'center' ||
+					(!popen && (!topstack || topstack === 'blockquote' ||
+						topstack === 'center')) ||
 					tagname === 'p' || tagname === 'br' || blockseparator.test(tagname)) {
 					text = text.replace(/\s+$/, '');
 				}
