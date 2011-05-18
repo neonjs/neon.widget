@@ -607,6 +607,27 @@ neon.widget = (function() {
 				}
 			};
 
+			var getelement = function(tagname, descend) {
+				var
+					el,
+					rng = getrange() || savedselection,
+					selparent;
+				if (rng) {
+					selparent = rng.commonAncestorContainer || rng.parentElement();
+					if (descend && selparent.getElementsByTagName) {
+						el = selparent.getElementsByTagName('a');
+						if (el.length) {
+							return el[0];
+						}
+					}
+					for (el = selparent; el !== editor[0]; el = el.parentNode) {
+						if (el.tagName && el.tagName.toLowerCase() === tagname) {
+							return el;
+						}
+					}
+				}
+			};
+
 			var updatecontrols = function(evt) {
 				setTimeout(function() {
 					var i;
@@ -740,6 +761,15 @@ neon.widget = (function() {
 
 				flyout = widgets.flyout(chooser, extendobject(myopts,
 					{contents: flyoutform}));
+
+				updators.push(function() {
+					if (getelement('a')) {
+						chooser.addClass('neon-widget-richtext-active');
+					}
+					else {
+						chooser.removeClass('neon-widget-richtext-active');
+					}
+				});
 			};
 
 			var addtablechooser = function() {
@@ -896,11 +926,13 @@ neon.widget = (function() {
 				editor.setAttribute('contentEditable', 'true');
 				editor.watch('keydown', updatecontrols);
 				editor.watch('mousedown', updatecontrols);
+				editor.watch('mouseup', updatecontrols);
 				toolbar.watch('mousedown', saveselection);
 
 				teardowns.push(function() {
 					editor.unwatch('keydown', updatecontrols)
-						.unwatch('mousedown', updatecontrols);
+						.unwatch('mousedown', updatecontrols)
+						.unwatch('mouseup', updatecontrols);
 					toolbar.unwatch('mousedown', saveselection);
 				});
 			}
