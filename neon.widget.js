@@ -607,22 +607,41 @@ neon.widget = (function() {
 				}
 			};
 
-			var getelement = function(tagname, descend) {
+			var findelement = function(tagname) {
 				var
-					el,
+					i, len, el,
 					rng = getrange() || savedselection,
+					comprng,
 					selparent;
 				if (rng) {
 					selparent = rng.commonAncestorContainer || rng.parentElement();
-					if (descend && selparent.getElementsByTagName) {
-						el = selparent.getElementsByTagName('a');
-						if (el.length) {
-							return el[0];
-						}
-					}
 					for (el = selparent; el !== editor[0]; el = el.parentNode) {
 						if (el.tagName && el.tagName.toLowerCase() === tagname) {
 							return el;
+						}
+					}
+					if (!rng.collapsed && (rng.text === undefined || rng.text) &&
+						selparent.getElementsByTagName) {
+						el = selparent.getElementsByTagName(tagname);
+						comprng = document.createRange ?
+							document.createRange() : document.body.createTextRange();
+						for (i = 0, len = el.length; i < len; i++) {
+
+							// determine if element el[i] is within the range
+							if (document.createRange) { // w3c
+								comprng.selectNodeContents(el[i]);
+								if (rng.compareBoundaryPoints(Range.END_TO_START, comprng) <= 0 &&
+									rng.compareBoundaryPoints(Range.START_TO_END, comprng) >= 0) {
+									return el[i];
+								}
+							}
+							else { // microsoft
+								comprng.moveToElementText(el[i]);
+								if (rng.compareEndPoints("StartToEnd", comprng) <= 0 &&
+									rng.compareEndPoints("EndToStart", comprng) >= 0) {
+									return el[i];
+								}
+							}
 						}
 					}
 				}
@@ -763,7 +782,7 @@ neon.widget = (function() {
 					{contents: flyoutform}));
 
 				updators.push(function() {
-					if (getelement('a')) {
+					if (findelement('a')) {
 						chooser.addClass('neon-widget-richtext-active');
 					}
 					else {
