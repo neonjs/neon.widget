@@ -36,7 +36,7 @@ See http://neonjs.com for documentation and examples of use.
 */
 
 /*jslint browser:true,newcap:true,undef:true */
-/*global neon:true */
+/*global neon:true,Range */
 
 /**
 @preserve The Neon Javascript Library: widget
@@ -610,7 +610,7 @@ neon.widget = (function() {
 			var findelement = function(tagname) {
 				var
 					i, len, el,
-					rng = getrange() || savedselection,
+					rng = savedselection,
 					comprng,
 					selparent;
 				if (rng) {
@@ -630,15 +630,15 @@ neon.widget = (function() {
 							// determine if element el[i] is within the range
 							if (document.createRange) { // w3c
 								comprng.selectNodeContents(el[i]);
-								if (rng.compareBoundaryPoints(Range.END_TO_START, comprng) <= 0 &&
-									rng.compareBoundaryPoints(Range.START_TO_END, comprng) >= 0) {
+								if (rng.compareBoundaryPoints(Range.END_TO_START, comprng) < 0 &&
+									rng.compareBoundaryPoints(Range.START_TO_END, comprng) > 0) {
 									return el[i];
 								}
 							}
 							else { // microsoft
 								comprng.moveToElementText(el[i]);
-								if (rng.compareEndPoints("StartToEnd", comprng) <= 0 &&
-									rng.compareEndPoints("EndToStart", comprng) >= 0) {
+								if (rng.compareEndPoints("StartToEnd", comprng) < 0 &&
+									rng.compareEndPoints("EndToStart", comprng) > 0) {
 									return el[i];
 								}
 							}
@@ -647,15 +647,20 @@ neon.widget = (function() {
 				}
 			};
 
-			var updatecontrols = function(evt) {
-				setTimeout(function() {
-					var i;
-					for (i = updators.length; i--;) {
-						updators[i]();
-					}
-				}, 0);
-				if (evt && (evt.which === 9 || evt.which === 17)) {
-					saveselection();
+			var updatecontrols = function() {
+				var i;
+				saveselection();
+				for (i = updators.length; i--;) {
+					updators[i]();
+				}
+			};
+
+			var updateevent = function(evt) {
+				if ((evt.which < 65 && evt.which !== 32) ||
+					evt.which > 122) {
+					setTimeout(function() {
+						updatecontrols();
+					}, 0);
 				}
 			};
 
@@ -665,6 +670,7 @@ neon.widget = (function() {
 					document.execCommand('useCSS', false, true);
 				} catch (e) {}
 				document.execCommand(command, false, param);
+				updatecontrols();
 			};
 
 			var geticon = function(iconnum) {
@@ -686,14 +692,12 @@ neon.widget = (function() {
 				var onclick = function(evt) {
 					if (evt.which !== 2 && evt.which !== 3) {
 						docommand(command, null);
-						updatecontrols();
 					}
 				};
 
 				var onkeypress = function(evt) {
 					if (evt.which === 13 || evt.which === 32) {
 						docommand(command, null);
-						updatecontrols();
 						evt.preventDefault();
 					}
 				};
@@ -849,7 +853,6 @@ neon.widget = (function() {
 
 				var onselect = function(el) {
 					docommand('formatblock', '<'+el[0].parentNode.tagName+'>');
-					updatecontrols();
 				};
 
 				chooser.append(geticon(9)) // drop arrow icon
@@ -943,15 +946,13 @@ neon.widget = (function() {
 
 				// strangely in IE6 (and 7?) the following capital E is important
 				editor.setAttribute('contentEditable', 'true');
-				editor.watch('keydown', updatecontrols);
-				editor.watch('mousedown', updatecontrols);
-				editor.watch('mouseup', updatecontrols);
+				editor.watch('keyup', updateevent);
+				editor.watch('mouseup', updateevent);
 				toolbar.watch('mousedown', saveselection);
 
 				teardowns.push(function() {
-					editor.unwatch('keydown', updatecontrols)
-						.unwatch('mousedown', updatecontrols)
-						.unwatch('mouseup', updatecontrols);
+					editor.unwatch('keyup', updateevent)
+						.unwatch('mouseup', updateevent);
 					toolbar.unwatch('mousedown', saveselection);
 				});
 			}
@@ -979,7 +980,6 @@ neon.widget = (function() {
 				htmlconvert(source, !canedit, 0);
 
 			updatecontrols();
-
 		};
 		
 		for (i = container.length; i--;) {
