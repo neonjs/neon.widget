@@ -948,11 +948,13 @@ neon.widget = (function() {
 				editor.setAttribute('contentEditable', 'true');
 				editor.watch('keyup', updateevent);
 				editor.watch('mouseup', updateevent);
+				editor.watch('mouseleave', updateevent);
 				toolbar.watch('mousedown', saveselection);
 
 				teardowns.push(function() {
 					editor.unwatch('keyup', updateevent)
-						.unwatch('mouseup', updateevent);
+						.unwatch('mouseup', updateevent)
+						.unwatch('mouseleave', updateevent);
 					toolbar.unwatch('mousedown', saveselection);
 				});
 			}
