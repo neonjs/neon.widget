@@ -683,32 +683,45 @@ neon.widget = (function() {
 							') -1px -'+((iconsize+2)*iconnum+1)+'px');
 			};
 
-			var addbutton = function(command, iconnum, title) {
+			var addbutton = function(toolbar, title, callback) {
 				var
-					button = toolbar.append({span:'',$title:title})
+					button = toolbar.append({span:null,$title:title})
 						.setAttribute('tabindex', '0')
 						.addClass('neon-widget-richtext-toolbar-selectable');
 
 				var onclick = function(evt) {
 					if (evt.which !== 2 && evt.which !== 3) {
-						docommand(command, null);
+						callback();
 					}
 				};
 
 				var onkeypress = function(evt) {
 					if (evt.which === 13 || evt.which === 32) {
-						docommand(command, null);
+						callback();
 						evt.preventDefault();
 					}
 				};
 
-				button.append(geticon(iconnum));
 				button.watch('click', onclick);
 				button.watch('keypress', onkeypress);
 				teardowns.push(function() {
 					button.unwatch('click', onclick)
 						.unwatch('keypress', onkeypress);
 				});
+
+				return button;
+			};
+
+			var addcommandbutton = function(command, iconnum, title) {
+				var
+					button;
+
+				var onclick = function() {
+					docommand(command, null);
+				}
+
+				button = addbutton(toolbar, title, onclick);
+				button.append(geticon(iconnum));
 
 				updators.push(function() {
 					try {
@@ -729,14 +742,9 @@ neon.widget = (function() {
 
 			var addhtmlbutton = function() {
 				var
-					button = toolbar.append({span:{span:"HTML"},$title:"Edit as HTML"})
-						.setAttribute('tabindex', '0')
-						.addClass('neon-widget-richtext-toolbar-selectable'),
-					offbutton = htmltoolbar.append({span:{span:"Exit HTML mode"},$title:"Return to normal editing mode"})
-						.setAttribute('tabindex', '0')
-						.addClass('neon-widget-richtext-toolbar-selectable');
+					onbutton, offbutton;
 
-				var onclick = function() {
+				var onclickon = function() {
 					htmltoolbar.style('display', 'block');
 					htmleditor.style('display', 'block');
 					htmleditor[0].value = htmlconvert(editor[0].innerHTML);
@@ -755,12 +763,10 @@ neon.widget = (function() {
 					htmleditor.style('display', 'none');
 				};
 
-				button.watch('click', onclick);
-				offbutton.watch('click', onclickoff);
-				teardowns.push(function() {
-					button.unwatch('click', onclick);
-					offbutton.unwatch('click', onclickoff);
-				});
+				onbutton = addbutton(toolbar, "Edit as HTML", onclickon);
+				onbutton.append("HTML");
+				offbutton = addbutton(htmltoolbar, "Leave HTML mode and return to editing with toolbar", onclickoff);
+				offbutton.append("Leave HTML mode");
 			};
 
 			var addlinkchooser = function() {
@@ -915,17 +921,17 @@ neon.widget = (function() {
 					addstylechooser();
 					addseparator();
 				}
-				addbutton('bold', 0, 'Bold');
-				addbutton('italic', 1, 'Italic');
+				addcommandbutton('bold', 0, 'Bold');
+				addcommandbutton('italic', 1, 'Italic');
 				if (myopts.listbuttons || myopts.listbuttons === undefined) {
 					addseparator();
-					addbutton('insertunorderedlist', 2, 'Bulleted list');
-					addbutton('insertorderedlist', 3, 'Numbered list');
+					addcommandbutton('insertunorderedlist', 2, 'Bulleted list');
+					addcommandbutton('insertorderedlist', 3, 'Numbered list');
 				}
 				if (myopts.indentbuttons || myopts.indentbuttons === undefined) {
 					addseparator();
-					addbutton('outdent', 4, 'Decrease indent');
-					addbutton('indent', 5, 'Increase indent');
+					addcommandbutton('outdent', 4, 'Decrease indent');
+					addcommandbutton('indent', 5, 'Increase indent');
 				}
 				if (myopts.linkchooser || myopts.linkchooser === undefined) {
 					addseparator();
