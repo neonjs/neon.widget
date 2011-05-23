@@ -239,14 +239,18 @@ neon.widget = (function() {
 				hostpos, flyoutpos,
 				windowpos,
 				addrect, dim,
-				flyout = neon.select(host[0].firstChild.nextSibling);
+				flyout = neon.select(host[0].firstChild.nextSibling)
+					.removeClass('neon-widget-flyout-hidden')
+					.style('top', horiz ? '0' : '100%')
+					.style('left', horiz ? '100%' : '0')
+					.style('right', 'auto').style('bottom', 'auto') ;
+					
+			if (myopts.onfocus) {
+				myopts.onfocus.call(host);
+			}
 
 			windowpos = neon.select(window).getPosition();
-			flyoutpos = flyout.removeClass("neon-widget-flyout-hidden") 
-				.style('top', horiz ? '0' : '100%')
-				.style('left', horiz ? '100%' : '0')
-				.style('right', 'auto').style('bottom', 'auto') 
-				.getPosition();
+			flyoutpos = flyout.getPosition();
 			hostpos = host.getPosition();
 			flyout.style('top', 'auto').style('left', 'auto');
 
@@ -268,10 +272,6 @@ neon.widget = (function() {
 				flyout.style('opacity', flyout.getStyle('opacity') || '0', '1',
 					myopts.fade > 1 ? myopts.fade : 200, 'out');
 			}
-
-			if (myopts.onfocus) {
-				myopts.onfocus.call(host);
-			}
 		};
 
 		var onfocusin = function(evt) {
@@ -281,7 +281,7 @@ neon.widget = (function() {
 			fuzz = null;
 		};
 
-		var onfocusout = function(evt) {
+		var onfocusout = function() {
 			var
 				element = this;
 			fuzz = element;
@@ -289,6 +289,9 @@ neon.widget = (function() {
 				var
 					flyout;
 				if (fuzz === element) {
+					if (myopts.onblur) {
+						myopts.onblur.call(neon.select(element));
+					}
 					flyout = neon.select(element.firstChild.nextSibling);
 					if (myopts.fade) {
 						flyout.style('opacity', flyout.getStyle('opacity') || '1', '0',
@@ -298,9 +301,6 @@ neon.widget = (function() {
 					}
 					else {
 						flyout.addClass("neon-widget-flyout-hidden");
-					}
-					if (myopts.onblur) {
-						myopts.onblur.call(neon.select(element));
 					}
 					fuzz = null;
 				}
@@ -665,12 +665,18 @@ neon.widget = (function() {
 			};
 
 			var docommand = function(command, param) {
+				var
+					foc = document.activeElement;
 				restoreselection();
+				editor[0].focus();
 				try {
 					document.execCommand('useCSS', false, true);
 				} catch (e) {}
 				document.execCommand(command, false, param);
 				updatecontrols();
+				if (foc && foc !== editor[0]) {
+					foc.focus();
+				}
 			};
 
 			var geticon = function(iconnum) {
@@ -718,7 +724,7 @@ neon.widget = (function() {
 
 				var onclick = function() {
 					docommand(command, null);
-				}
+				};
 
 				button = addbutton(toolbar, title, onclick);
 				button.append(geticon(iconnum));
@@ -774,22 +780,90 @@ neon.widget = (function() {
 					chooser = toolbar.append({span:'',$title:'Web link'})
 						.setAttribute('tabindex', '0')
 						.addClass('neon-widget-richtext-toolbar-selectable'),
-					flyoutform = neon.build({div:null})
+					flyoutform = neon.build({form:null})
 						.addClass('neon-widget-richtext-flyoutform'),
 					urlinput = neon.build({input:null,$size:24}),
 					titleinput = neon.build({input:null,$size:24}),
-					submitbutton = neon.build({button:"Add link"}),
+					submitbutton = neon.build({button:"OK"}),
+					cancelbutton = neon.build({button:"Cancel"}),
+					editlink,
 					flyout;
+
+				var onfocus = function() {
+					saveselection();
+					editlink = neon.select(findelement('a'));
+					urlinput[0].value = editlink.length ?
+						editlink[0].getAttribute('href') : '';
+					titleinput[0].value = editlink.length ?
+						editlink[0].getAttribute('title') : '';
+					urlinput[0].focus();
+				};
+
+				var cancel = function(evt) {
+					flyout.blur();
+					evt.preventDefault();
+				};
+
+				var onsubmit = function(evt) {
+					var
+						rng = savedselection;
+					if (urlinput[0].value &&
+						!/^[a-z][a-z0-9+.\-]*:/i.test(urlinput[0].value)) {
+						urlinput[0].value = "http://" + urlinput[0].value;
+					}
+					if (editlink.length &&
+						(rng.collapsed || (rng.text !== undefined && !rng.text))) {
+						if (urlinput[0].value) {
+							editlink.setAttribute('href', urlinput[0].value);
+							if (titleinput[0].value) {
+								editlink.setAttribute('title', titleinput[0].value);
+							}
+							else {
+								editlink.removeAttribute('title');
+							}
+						}
+						else {
+							// strip the link: move its contents out of it then delete it
+							while (editlink[0].firstChild) {
+								editlink.insert(editlink[0].firstChild);
+							}
+							editlink.remove();
+						}
+					}
+					else {
+						docommand('unlink', null);
+						if (urlinput[0].value) {
+							docommand('createLink', urlinput[0].value);
+							saveselection();
+							editlink = neon.select(findelement('a'));
+							if (editlink.length && titleinput[0].value) {
+								editlink.setAttribute('title', titleinput[0].value);
+							}
+						}
+					}
+					flyout.blur();
+					evt.preventDefault();
+				};
 
 				chooser.append(geticon(6));
 
 				flyoutform.append({div:[{label:"Link address"},urlinput]});
 				flyoutform.append({div:[{label:"Hover text"},titleinput]});
-				flyoutform.append({div:submitbutton})
+				flyoutform.append({div:[submitbutton, cancelbutton]})
 					.addClass('neon-widget-richtext-flyoutform-buttonrow');
 
-				flyout = widgets.flyout(chooser, extendobject(myopts,
-					{contents: flyoutform}));
+				flyoutform.watch('submit', onsubmit);
+				cancelbutton.watch('click', cancel);
+				teardowns.push(function() {
+					submitbutton.unwatch('click', onsubmit);
+					cancelbutton.unwatch('click', cancel);
+					flyoutform.unwatch('keydown', onkeydown);
+				});
+
+				flyout = widgets.flyout(chooser, extendobject(myopts, {
+					contents: flyoutform,
+					onfocus: onfocus
+					}));
 
 				updators.push(function() {
 					if (findelement('a')) {
