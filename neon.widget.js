@@ -784,7 +784,7 @@ neon.widget = (function() {
 						.addClass('neon-widget-richtext-flyoutform'),
 					urlinput = neon.build({input:null,$size:24}),
 					titleinput = neon.build({input:null,$size:24}),
-					submitbutton = neon.build({button:"OK"}),
+					submitbutton = neon.build({input:null,$type:"submit",$value:"OK"}),
 					cancelbutton = neon.build({button:"Cancel"}),
 					editlink,
 					flyout;
