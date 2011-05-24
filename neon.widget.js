@@ -904,18 +904,21 @@ neon.widget = (function() {
 					chooser = toolbar.append({span:'',$title:'Table'})
 						.setAttribute('tabindex', '0')
 						.addClass('neon-widget-richtext-toolbar-selectable'),
-					flyoutform = neon.build({div:null})
+					flyoutform = neon.build({form:null})
 						.addClass('neon-widget-richtext-dialog'),
 					columnsinput = neon.build({input:null,$size:6}),
 					rowsinput = neon.build({input:null,$size:6}),
-					submitbutton = neon.build({button:"Create table"}),
+					submitbutton = neon.build({input:null,$type:"submit",
+						$value:"OK"}),
+					cancelbutton = neon.build({button:"Cancel"}),
 					flyout;
 
 				chooser.append(geticon(8));
 
-				flyoutform.append({div:[{label:"Columns"},columnsinput]});
-				flyoutform.append({div:[{label:"Rows"},rowsinput]});
-				flyoutform.append({div:submitbutton})
+				flyoutform.append({h2:"Insert table"});
+				flyoutform.append(getcontrol("Columns", columnsinput));
+				flyoutform.append(getcontrol("Rows", rowsinput));
+				flyoutform.append({div:[submitbutton,' ',cancelbutton]})
 					.addClass('neon-widget-richtext-dialog-buttonrow');
 
 				flyout = widgets.flyout(chooser, extendobject(myopts,
@@ -927,16 +930,19 @@ neon.widget = (function() {
 					chooser = toolbar.append({span:'',$title:'Image'})
 						.setAttribute('tabindex', '0')
 						.addClass('neon-widget-richtext-toolbar-selectable'),
-					flyoutform = neon.build({div:null})
+					flyoutform = neon.build({form:null})
 						.addClass('neon-widget-richtext-dialog'),
-					urlinput = neon.build({input:null,$size:24}),
-					submitbutton = neon.build({button:"Add image"}),
+					urlinput = neon.build({input:null,$size:20}),
+					submitbutton = neon.build({input:null,$type:"submit",
+						$value:"OK"}),
+					cancelbutton = neon.build({button:"Cancel"}),
 					flyout;
 
 				chooser.append(geticon(7));
 
-				flyoutform.append({div:[{label:"Image address"},urlinput]});
-				flyoutform.append({div:submitbutton})
+				flyoutform.append({h2:"Add or edit image"});
+				flyoutform.append(getcontrol("Image URL", urlinput));
+				flyoutform.append({div:[submitbutton,' ',cancelbutton]})
 					.addClass('neon-widget-richtext-dialog-buttonrow');
 
 				flyout = widgets.flyout(chooser, extendobject(myopts,
