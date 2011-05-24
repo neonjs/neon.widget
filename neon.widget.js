@@ -49,6 +49,7 @@ neon.widget = (function() {
 	
 	var
 		canedit = document.body.contentEditable !== undefined,
+		gid = 0,
 		widgets = {};
 	
 	var htmlconvert = function(input, strippara, wstopara) {
@@ -245,10 +246,16 @@ neon.widget = (function() {
 					.style('left', horiz ? '100%' : '0')
 					.style('right', 'auto').style('bottom', 'auto') ;
 					
+			if (myopts.fade) {
+				flyout.style('opacity', flyout.getStyle('opacity') || '0', '1',
+					myopts.fade > 1 ? myopts.fade : 200, 'out');
+			}
+
 			if (myopts.onfocus) {
 				myopts.onfocus.call(host);
 			}
 
+			// calculate best position for flyout
 			windowpos = neon.select(window).getPosition();
 			flyoutpos = flyout.getPosition();
 			hostpos = host.getPosition();
@@ -267,11 +274,6 @@ neon.widget = (function() {
 				windowpos.bottom+addrect-hostpos.bottom < dim ? 'bottom' :
 				/t/.test(direction) ? 'bottom' : 'top',
 				!horiz ? '100%' : '0');
-
-			if (myopts.fade) {
-				flyout.style('opacity', flyout.getStyle('opacity') || '0', '1',
-					myopts.fade > 1 ? myopts.fade : 200, 'out');
-			}
 		};
 
 		var onfocusin = function(evt) {
@@ -446,6 +448,9 @@ neon.widget = (function() {
 			};
 
 			var onblur = function() {
+				if (myopts.onblur) {
+					myopts.onblur.call(this);
+				}
 				updateselection(null);
 			};
 
@@ -689,6 +694,21 @@ neon.widget = (function() {
 							') -1px -'+((iconsize+2)*iconnum+1)+'px');
 			};
 
+			var getcontrol = function(labeltext, control, postlabel) {
+				var
+					id = "neon-widget-richtext-id" + (++gid);
+					contents = [];
+				if (labeltext) {
+					contents.push({label:labeltext,$for:id,
+						$class:"neon-widget-richtext-dialog-mainlabel"});
+				}
+				contents.push(control.setAttribute('id', id));
+				if (postlabel) {
+					contents.push({label:postlabel,$for:id});
+				}
+				return {div:contents,$class:"neon-widget-richtext-dialog-controlrow"};
+			};
+
 			var addbutton = function(toolbar, title, callback) {
 				var
 					button = toolbar.append({span:null,$title:title})
@@ -781,9 +801,9 @@ neon.widget = (function() {
 						.setAttribute('tabindex', '0')
 						.addClass('neon-widget-richtext-toolbar-selectable'),
 					flyoutform = neon.build({form:null})
-						.addClass('neon-widget-richtext-flyoutform'),
-					urlinput = neon.build({input:null,$size:24}),
-					titleinput = neon.build({input:null,$size:24}),
+						.addClass('neon-widget-richtext-dialog'),
+					urlinput = neon.build({input:null,$size:20}),
+					titleinput = neon.build({input:null,$size:20}),
 					submitbutton = neon.build({input:null,$type:"submit",$value:"OK"}),
 					cancelbutton = neon.build({button:"Cancel"}),
 					editlink,
@@ -796,7 +816,10 @@ neon.widget = (function() {
 						editlink[0].getAttribute('href') : '';
 					titleinput[0].value = editlink.length ?
 						editlink[0].getAttribute('title') : '';
-					urlinput[0].focus();
+					// ie compatibility, can't focus immediately during this event
+					setTimeout(function() {
+						urlinput[0].focus();
+					}, 0);
 				};
 
 				var cancel = function(evt) {
@@ -847,10 +870,11 @@ neon.widget = (function() {
 
 				chooser.append(geticon(6));
 
-				flyoutform.append({div:[{label:"Link address"},urlinput]});
-				flyoutform.append({div:[{label:"Hover text"},titleinput]});
-				flyoutform.append({div:[submitbutton, cancelbutton]})
-					.addClass('neon-widget-richtext-flyoutform-buttonrow');
+				flyoutform.append({div:{h2:"Add or edit link"}});
+				flyoutform.append(getcontrol("Link address", urlinput));
+				flyoutform.append(getcontrol("Hover text", titleinput));
+				flyoutform.append({div:[submitbutton, ' ', cancelbutton]})
+					.addClass('neon-widget-richtext-dialog-buttonrow');
 
 				flyoutform.watch('submit', onsubmit);
 				cancelbutton.watch('click', cancel);
@@ -881,7 +905,7 @@ neon.widget = (function() {
 						.setAttribute('tabindex', '0')
 						.addClass('neon-widget-richtext-toolbar-selectable'),
 					flyoutform = neon.build({div:null})
-						.addClass('neon-widget-richtext-flyoutform'),
+						.addClass('neon-widget-richtext-dialog'),
 					columnsinput = neon.build({input:null,$size:6}),
 					rowsinput = neon.build({input:null,$size:6}),
 					submitbutton = neon.build({button:"Create table"}),
@@ -892,7 +916,7 @@ neon.widget = (function() {
 				flyoutform.append({div:[{label:"Columns"},columnsinput]});
 				flyoutform.append({div:[{label:"Rows"},rowsinput]});
 				flyoutform.append({div:submitbutton})
-					.addClass('neon-widget-richtext-flyoutform-buttonrow');
+					.addClass('neon-widget-richtext-dialog-buttonrow');
 
 				flyout = widgets.flyout(chooser, extendobject(myopts,
 					{contents: flyoutform}));
@@ -904,7 +928,7 @@ neon.widget = (function() {
 						.setAttribute('tabindex', '0')
 						.addClass('neon-widget-richtext-toolbar-selectable'),
 					flyoutform = neon.build({div:null})
-						.addClass('neon-widget-richtext-flyoutform'),
+						.addClass('neon-widget-richtext-dialog'),
 					urlinput = neon.build({input:null,$size:24}),
 					submitbutton = neon.build({button:"Add image"}),
 					flyout;
@@ -913,7 +937,7 @@ neon.widget = (function() {
 
 				flyoutform.append({div:[{label:"Image address"},urlinput]});
 				flyoutform.append({div:submitbutton})
-					.addClass('neon-widget-richtext-flyoutform-buttonrow');
+					.addClass('neon-widget-richtext-dialog-buttonrow');
 
 				flyout = widgets.flyout(chooser, extendobject(myopts,
 					{contents: flyoutform}));
@@ -1098,10 +1122,18 @@ neon.widget = (function() {
 			'width:100%;border:0;padding:0;margin:0;background:#fff;color:#000;font:inherit;min-height:14em')
 		.styleRule('.neon-widget-richtext-toolbar-altnotice',
 			'padding:5px;text-align:right')
-		.styleRule('.neon-widget-richtext-flyoutform',
-			'background:#f9f6f3;padding:3px 5px')
-		.styleRule('.neon-widget-richtext-flyoutform-buttonrow',
-			'text-align:right;margin-top:5px')
+		.styleRule('.neon-widget-richtext-dialog',
+			'background:#f9f6f3;padding:5px;margin:0')
+		.styleRule('.neon-widget-richtext-dialog h2',
+			'white-space:nowrap;margin:0 0 5px;font-size:100%')
+		.styleRule('.neon-widget-richtext-dialog-controlrow',
+			'white-space:nowrap;margin-left:8em;margin-bottom:5px')
+		.styleRule('.neon-widget-richtext-dialog-controlrow *',
+			'vertical-align:middle')
+		.styleRule('.neon-widget-richtext-dialog-mainlabel',
+			'display:inline-block;margin-left:-8em;width:7.5em;overflow:hidden')
+		.styleRule('.neon-widget-richtext-dialog-buttonrow',
+			'white-space:nowrap;text-align:right;margin-top:9px')
 		.styleRule('.neon-widget-richtext-toolbar-icon',
 			'display:inline-block;vertical-align:middle')
 		.styleRule('.neon-widget-richtext-toolbar-sideicon',
