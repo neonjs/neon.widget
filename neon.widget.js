@@ -696,7 +696,7 @@ neon.widget = (function() {
 
 			var getcontrol = function(labeltext, control, postlabel) {
 				var
-					id = "neon-widget-richtext-id" + (++gid);
+					id = "neon-widget-richtext-id" + (++gid),
 					contents = [];
 				if (labeltext) {
 					contents.push({label:labeltext,$for:id,
@@ -879,9 +879,8 @@ neon.widget = (function() {
 				flyoutform.watch('submit', onsubmit);
 				cancelbutton.watch('click', cancel);
 				teardowns.push(function() {
-					submitbutton.unwatch('click', onsubmit);
+					flyoutform.unwatch('submit', onsubmit);
 					cancelbutton.unwatch('click', cancel);
-					flyoutform.unwatch('keydown', onkeydown);
 				});
 
 				flyout = widgets.flyout(chooser, extendobject(myopts, {
