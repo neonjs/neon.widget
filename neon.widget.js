@@ -575,7 +575,11 @@ neon.widget = (function() {
 					sel, rng, par;
 				if (window.getSelection) {
 					sel = window.getSelection();
-					if (sel.rangeCount) {
+					if (sel.rangeCount &&
+						// only use collapsed selection when focused (opera workaround)
+						(!sel.isCollapsed || editor[0] === document.activeElement ||
+						editor.contains(document.activeElement))) {
+
 						rng = sel.getRangeAt(0);
 						if (rng.commonAncestorContainer === editor[0] ||
 							editor.contains(rng.commonAncestorContainer)) {
@@ -673,7 +677,6 @@ neon.widget = (function() {
 				var
 					foc = document.activeElement;
 				restoreselection();
-				editor[0].focus();
 				try {
 					document.execCommand('useCSS', false, true);
 				} catch (e) {}
@@ -751,7 +754,8 @@ neon.widget = (function() {
 
 				updators.push(function() {
 					try {
-						if (document.queryCommandState(command)) {
+						if (document.queryCommandState(command) &&
+							command !== "outdent") { // opera issue
 							button.addClass('neon-widget-richtext-active');
 						}
 						else {
@@ -804,6 +808,7 @@ neon.widget = (function() {
 						.addClass('neon-widget-richtext-dialog'),
 					urlinput = neon.build({input:null,$size:20}),
 					titleinput = neon.build({input:null,$size:20}),
+					dialogtitle = neon.build("Create link"),
 					submitbutton = neon.build({input:null,$type:"submit",$value:"OK"}),
 					cancelbutton = neon.build({button:"Cancel"}),
 					editlink,
@@ -816,6 +821,8 @@ neon.widget = (function() {
 						editlink[0].getAttribute('href') : '';
 					titleinput[0].value = editlink.length ?
 						editlink[0].getAttribute('title') : '';
+					dialogtitle[0].data = editlink.length ?
+						"Modify link" : "Create link";
 					// ie compatibility, can't focus immediately during this event
 					setTimeout(function() {
 						urlinput[0].focus();
@@ -870,7 +877,7 @@ neon.widget = (function() {
 
 				chooser.append(geticon(6));
 
-				flyoutform.append({div:{h2:"Add or edit link"}});
+				flyoutform.append({div:{h2:dialogtitle}});
 				flyoutform.append(getcontrol("Link address", urlinput));
 				flyoutform.append(getcontrol("Hover text", titleinput));
 				flyoutform.append({div:[submitbutton, ' ', cancelbutton]})
