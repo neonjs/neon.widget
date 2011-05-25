@@ -807,6 +807,8 @@ neon.widget = (function() {
 					flyoutform = neon.build({form:null})
 						.addClass('neon-widget-richtext-dialog'),
 					urlinput = neon.build({input:null,$size:20}),
+					newwindowinput = neon.build({input:null,$type:"checkbox",
+						$value:"1"}),
 					titleinput = neon.build({input:null,$size:20}),
 					dialogtitle = neon.build("Create link"),
 					submitbutton = neon.build({input:null,$type:"submit",$value:"OK"}),
@@ -823,6 +825,8 @@ neon.widget = (function() {
 						editlink[0].getAttribute('title') : '';
 					dialogtitle[0].data = editlink.length ?
 						"Modify link" : "Create link";
+					newwindowinput[0].checked = editlink.length ?
+						/^_(blank|new)$/.test(editlink[0].getAttribute('target')) : false;
 					// ie compatibility, can't focus immediately during this event
 					setTimeout(function() {
 						urlinput[0].focus();
@@ -851,6 +855,12 @@ neon.widget = (function() {
 							else {
 								editlink.removeAttribute('title');
 							}
+							if (newwindowinput[0].checked) {
+								editlink.setAttribute('target', '_blank');
+							}
+							else {
+								editlink.removeAttribute('target');
+							}
 						}
 						else {
 							// strip the link: move its contents out of it then delete it
@@ -866,8 +876,13 @@ neon.widget = (function() {
 							docommand('createLink', urlinput[0].value);
 							saveselection();
 							editlink = neon.select(findelement('a'));
-							if (editlink.length && titleinput[0].value) {
-								editlink.setAttribute('title', titleinput[0].value);
+							if (editlink.length) {
+								if (titleinput[0].value) {
+									editlink.setAttribute('title', titleinput[0].value);
+								}
+								if (newwindowinput[0].checked) {
+									editlink.setAttribute('target', '_blank');
+								}
 							}
 						}
 					}
@@ -880,6 +895,10 @@ neon.widget = (function() {
 				flyoutform.append({div:{h2:dialogtitle}});
 				flyoutform.append(getcontrol("Link address", urlinput));
 				flyoutform.append(getcontrol("Hover text", titleinput));
+				if (myopts.newwindowlinks) {
+					flyoutform.append(getcontrol(null, newwindowinput,
+						"Open in new window"));
+				}
 				flyoutform.append({div:[submitbutton, ' ', cancelbutton]})
 					.addClass('neon-widget-richtext-dialog-buttonrow');
 
@@ -1143,7 +1162,7 @@ neon.widget = (function() {
 		.styleRule('.neon-widget-richtext-dialog-controlrow *',
 			'vertical-align:middle')
 		.styleRule('.neon-widget-richtext-dialog-mainlabel',
-			'display:inline-block;margin-left:-8em;width:7.5em;overflow:hidden')
+			'display:inline-block;margin-left:-8em;width:7.5em;margin-right:0.5em;overflow:hidden')
 		.styleRule('.neon-widget-richtext-dialog-buttonrow',
 			'white-space:nowrap;text-align:right;margin-top:9px')
 		.styleRule('.neon-widget-richtext-toolbar-icon',
