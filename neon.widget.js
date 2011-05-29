@@ -36,7 +36,7 @@ See http://neonjs.com for documentation and examples of use.
 */
 
 /*jslint browser:true,newcap:true,undef:true */
-/*global neon:true,Range */
+/*global neon:true,Range,opera */
 
 /**
 @preserve The Neon Javascript Library: widget
@@ -609,6 +609,11 @@ neon.widget = (function() {
 						sel = window.getSelection();
 						sel.removeAllRanges();
 						sel.addRange(savedselection);
+						// firefox: can throw exceptions if not focused (even if
+						// text selected) opera: loses selection when focus called
+						if (!window.opera) {
+							editor[0].focus();
+						}
 					}
 					else {
 						savedselection.select();
@@ -682,7 +687,7 @@ neon.widget = (function() {
 				} catch (e) {}
 				document.execCommand(command, false, param);
 				updatecontrols();
-				if (foc && foc !== editor[0]) {
+				if (foc && foc !== editor[0] && foc !== document.activeElement) {
 					foc.focus();
 				}
 			};
@@ -813,7 +818,7 @@ neon.widget = (function() {
 					dialogtitle = neon.build("Create link"),
 					submitbutton = neon.build({input:null,$type:"submit",$value:"OK"}),
 					cancelbutton = neon.build({button:"Cancel"}),
-					editlink,
+					editlink = null,
 					flyout;
 
 				var onfocus = function() {
@@ -892,7 +897,7 @@ neon.widget = (function() {
 
 				chooser.append(geticon(6));
 
-				flyoutform.append({div:{h2:dialogtitle}});
+				flyoutform.append({h2:dialogtitle});
 				flyoutform.append(getcontrol("Link address", urlinput));
 				flyoutform.append(getcontrol("Hover text", titleinput));
 				if (myopts.newwindowlinks) {
@@ -911,7 +916,8 @@ neon.widget = (function() {
 
 				flyout = widgets.flyout(chooser, extendobject(myopts, {
 					contents: flyoutform,
-					onfocus: onfocus
+					onfocus: onfocus,
+					onblur: restoreselection
 					}));
 
 				updators.push(function() {
@@ -933,21 +939,57 @@ neon.widget = (function() {
 						.addClass('neon-widget-richtext-dialog'),
 					columnsinput = neon.build({input:null,$size:6}),
 					rowsinput = neon.build({input:null,$size:6}),
+					dialogtitle = neon.build("Insert table"),
 					submitbutton = neon.build({input:null,$type:"submit",
 						$value:"OK"}),
 					cancelbutton = neon.build({button:"Cancel"}),
 					flyout;
 
+				var cancel = function(evt) {
+					flyout.blur();
+					evt.preventDefault();
+				};
+
+				var onfocus = function() {
+					setTimeout(function() {
+						columnsinput[0].focus();
+					}, 0);
+				};
+
+				var onsubmit = function(evt) {
+					flyout.blur();
+					evt.preventDefault();
+				};
+
 				chooser.append(geticon(8));
 
-				flyoutform.append({h2:"Insert table"});
+				flyoutform.append({h2:dialogtitle});
 				flyoutform.append(getcontrol("Columns", columnsinput));
 				flyoutform.append(getcontrol("Rows", rowsinput));
 				flyoutform.append({div:[submitbutton,' ',cancelbutton]})
 					.addClass('neon-widget-richtext-dialog-buttonrow');
 
-				flyout = widgets.flyout(chooser, extendobject(myopts,
-					{contents: flyoutform}));
+				flyoutform.watch('submit', onsubmit);
+				cancelbutton.watch('click', cancel);
+				teardowns.push(function() {
+					flyoutform.unwatch('submit', onsubmit);
+					cancelbutton.unwatch('click', cancel);
+				});
+
+				flyout = widgets.flyout(chooser, extendobject(myopts, {
+					contents: flyoutform,
+					onfocus: onfocus,
+					onblur: restoreselection
+					}));
+
+				updators.push(function() {
+					if (findelement('table')) {
+						chooser.addClass('neon-widget-richtext-active');
+					}
+					else {
+						chooser.removeClass('neon-widget-richtext-active');
+					}
+				});
 			};
 
 			var addimagechooser = function() {
@@ -958,20 +1000,101 @@ neon.widget = (function() {
 					flyoutform = neon.build({form:null})
 						.addClass('neon-widget-richtext-dialog'),
 					urlinput = neon.build({input:null,$size:20}),
+					altinput = neon.build({input:null,$size:20}),
+					dialogtitle = neon.build("Insert image"),
 					submitbutton = neon.build({input:null,$type:"submit",
 						$value:"OK"}),
 					cancelbutton = neon.build({button:"Cancel"}),
+					editimage = null,
 					flyout;
+
+				var cancel = function(evt) {
+					flyout.blur();
+					evt.preventDefault();
+				};
+
+				var onfocus = function() {
+					saveselection();
+					editimage = neon.select(findelement('img'));
+					urlinput[0].value = editimage.length ?
+						editimage[0].getAttribute('src') : '';
+					altinput[0].value = editimage.length ?
+						editimage[0].getAttribute('alt') : '';
+					dialogtitle[0].data = editimage.length ?
+						"Modify image" : "Insert link";
+					// ie compatibility, can't focus immediately during this event
+					setTimeout(function() {
+						urlinput[0].focus();
+					}, 0);
+				};
+
+				var onsubmit = function(evt) {
+					var
+						rng = savedselection;
+					if (urlinput[0].value &&
+						!/^[a-z][a-z0-9+.\-]*:/i.test(urlinput[0].value)) {
+						urlinput[0].value = "http://" + urlinput[0].value;
+					}
+					if (editimage.length) {
+						if (urlinput[0].value) {
+							editimage.setAttribute('src', urlinput[0].value);
+							if (altinput[0].value) {
+								editimage.setAttribute('alt', altinput[0].value);
+							}
+							else {
+								editimage.removeAttribute('alt');
+							}
+						}
+						else {
+							// remove the image
+							editimage.remove();
+						}
+					}
+					else {
+						if (urlinput[0].value) {
+							docommand('insertImage', urlinput[0].value);
+							saveselection();
+							editimage = neon.select(findelement('img'));
+							if (editimage.length) {
+								if (altinput[0].value) {
+									editimage.setAttribute('alt', altinput[0].value);
+								}
+							}
+						}
+					}
+					flyout.blur();
+					evt.preventDefault();
+				};
 
 				chooser.append(geticon(7));
 
-				flyoutform.append({h2:"Add or edit image"});
+				flyoutform.append({h2:dialogtitle});
 				flyoutform.append(getcontrol("Image URL", urlinput));
+				flyoutform.append(getcontrol("Alternate text", altinput));
 				flyoutform.append({div:[submitbutton,' ',cancelbutton]})
 					.addClass('neon-widget-richtext-dialog-buttonrow');
 
-				flyout = widgets.flyout(chooser, extendobject(myopts,
-					{contents: flyoutform}));
+				flyoutform.watch('submit', onsubmit);
+				cancelbutton.watch('click', cancel);
+				teardowns.push(function() {
+					flyoutform.unwatch('submit', onsubmit);
+					cancelbutton.unwatch('click', cancel);
+				});
+
+				flyout = widgets.flyout(chooser, extendobject(myopts, {
+					contents: flyoutform,
+					onfocus: onfocus,
+					onblur: restoreselection
+					}));
+
+				updators.push(function() {
+					if (findelement('img')) {
+						chooser.addClass('neon-widget-richtext-active');
+					}
+					else {
+						chooser.removeClass('neon-widget-richtext-active');
+					}
+				});
 			};
 
 			var addstylechooser = function() {
@@ -1005,8 +1128,11 @@ neon.widget = (function() {
 						.addClass("neon-widget-richtext-toolbar-styleelement");
 				}
 				
-				menu = widgets.flyoutMenu(chooser, extendobject(myopts,
-					{contents: selections, onselect: onselect}));
+				menu = widgets.flyoutMenu(chooser, extendobject(myopts, {
+					contents: selections,
+					onselect: onselect,
+					onblur: restoreselection
+					}));
 
 				teardowns.push(function() {
 					menu.teardown();
