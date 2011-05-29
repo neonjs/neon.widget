@@ -589,10 +589,11 @@ neon.widget = (function() {
 				}
 				else {
 					rng = document.selection.createRange();
-					par = rng.parentElement();
-					if (par === editor[0] ||
-						editor.contains(par)) {
-						return rng;
+					if (rng.parentElement) {
+						par = rng.parentElement();
+						if (par === editor[0] || editor.contains(par)) {
+							return rng;
+						}
 					}
 				}
 			};
@@ -634,8 +635,7 @@ neon.widget = (function() {
 							return el;
 						}
 					}
-					if (!rng.collapsed && (rng.text === undefined || rng.text) &&
-						selparent.getElementsByTagName) {
+					if (selparent.getElementsByTagName) {
 						el = selparent.getElementsByTagName(tagname);
 						comprng = document.createRange ?
 							document.createRange() : document.body.createTextRange();
@@ -657,6 +657,15 @@ neon.widget = (function() {
 								}
 							}
 						}
+						/*
+						// find previous element if it's non-microsoft
+						if (rng.startContainer && rng.startContainer.nodeType === 1 &&
+							rng.startOffset &&
+							rng.startContainer.childNodes[rng.startOffset-1].tagName
+								.toLowerCase() === tagname) {
+							return rng.startContainer.childNodes[rng.startOffset-1];
+						}
+						*/
 					}
 				}
 			};
@@ -836,7 +845,7 @@ neon.widget = (function() {
 						/^_(blank|new)$/.test(editlink[0].getAttribute('target')) : false;
 					// ie compatibility, can't focus immediately during this event
 					setTimeout(function() {
-						urlinput[0].focus();
+						urlinput[0].select();
 					}, 0);
 				};
 
@@ -939,8 +948,8 @@ neon.widget = (function() {
 						.addClass('neon-widget-richtext-toolbar-selectable'),
 					flyoutform = neon.build({form:null})
 						.addClass('neon-widget-richtext-dialog'),
-					columnsinput = neon.build({input:null,$size:6}),
-					rowsinput = neon.build({input:null,$size:6}),
+					columnsinput = neon.build({input:null,$size:6,$value:"2"}),
+					rowsinput = neon.build({input:null,$size:6,$value:"6"}),
 					dialogtitle = neon.build("Insert table"),
 					submitbutton = neon.build({input:null,$type:"submit",
 						$value:"OK"}),
@@ -954,11 +963,30 @@ neon.widget = (function() {
 
 				var onfocus = function() {
 					setTimeout(function() {
-						columnsinput[0].focus();
+						columnsinput[0].select();
 					}, 0);
 				};
 
 				var onsubmit = function(evt) {
+					var
+						i, j, temphr, table, tbody, row;
+					if (columnsinput[0].value > 0 && rowsinput[0].value > 0) {
+						docommand('insertHorizontalRule', null);
+						saveselection();
+						temphr = neon.select(findelement('hr'));
+						if (temphr.length) {
+							table = neon.build({table:null});
+							tbody = table.append({tbody:null});
+							for (i = +rowsinput[0].value; i--;) {
+								row = tbody.append({tr:null});
+								for (j = +columnsinput[0].value; j--;) {
+									row.append({td:null});
+								}
+							}
+							temphr.insert(table);
+							temphr.remove();
+						}
+					}
 					flyout.blur();
 					evt.preventDefault();
 				};
@@ -1026,7 +1054,7 @@ neon.widget = (function() {
 						"Modify image" : "Insert link";
 					// ie compatibility, can't focus immediately during this event
 					setTimeout(function() {
-						urlinput[0].focus();
+						urlinput[0].select();
 					}, 0);
 				};
 
