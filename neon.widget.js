@@ -780,11 +780,13 @@ neon.widget = (function() {
 					onbutton, offbutton;
 
 				var onclickon = function() {
+					var
+						pos = editor.getPosition();
 					htmltoolbar.style('display', 'block');
 					htmleditor.style('display', 'block');
 					htmleditor[0].value = htmlconvert(editor[0].innerHTML);
 					htmlmode = true;
-					htmleditor.style('height', editor.getStyle('height'));
+					htmleditor.style('height', ((pos.bottom - pos.top || 200) + 1) + "px");
 					toolbar.style('display', 'none');
 					editor.style('display', 'none');
 				};
