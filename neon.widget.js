@@ -1051,7 +1051,7 @@ neon.widget = (function() {
 					altinput[0].value = editimage.length ?
 						editimage[0].getAttribute('alt') : '';
 					dialogtitle[0].data = editimage.length ?
-						"Modify image" : "Insert link";
+						"Modify image" : "Insert image";
 					// ie compatibility, can't focus immediately during this event
 					setTimeout(function() {
 						urlinput[0].select();
