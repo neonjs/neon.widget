@@ -425,6 +425,10 @@ neon.widget = (function() {
 				}
 			};
 
+			var selectnone = function() {
+				updateselection(null);
+			}
+
 			var select = function(el) {
 				if (myopts.onselect) {
 					myopts.onselect(el);
@@ -451,10 +455,10 @@ neon.widget = (function() {
 				if (myopts.onblur) {
 					myopts.onblur.call(this);
 				}
-				updateselection(null);
+				selectnone();
 			};
 
-			var onmouseleave = onblur;
+			var onmouseleave = selectnone;
 
 			var onkeydown = function(evt) {
 				// arrow keys
