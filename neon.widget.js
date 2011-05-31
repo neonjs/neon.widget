@@ -703,12 +703,14 @@ neon.widget = (function() {
 				var
 					foc = document.activeElement;
 				restoreselection();
-				try {
-					document.execCommand('useCSS', false, true);
-				} catch (e) {}
-				document.execCommand(command, false, param);
-				saveselection();
-				updatecontrols();
+				if (savedselection) {
+					try {
+						document.execCommand('useCSS', false, true);
+					} catch (e) {}
+					document.execCommand(command, false, param);
+					saveselection();
+					updatecontrols();
+				}
 				if (foc && foc !== editor[0] && foc !== document.activeElement) {
 					foc.focus();
 				}
