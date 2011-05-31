@@ -566,7 +566,7 @@ neon.widget = (function() {
 					.addClass('neon-widget-richtext-editor') : null,
 				htmlmode = false,
 				source,
-				savedselection = null,
+				savedselection = null, savedelements,
 				hiddenfield, form,
 				updators = [];
 
@@ -622,7 +622,28 @@ neon.widget = (function() {
 				}
 			};
 
-			var findelement = function(tagname) {
+			var saveelements = function(tagname) {
+				var
+					i,
+					elements = editor[0].getElementsByTagName(tagname);
+				savedelements = [];
+				for (i = elements.length; i--;) {
+					savedelements[i] = elements[i];
+				}
+			};
+
+			var findnewelement = function(tagname) {
+				var
+					i, j,
+					elements = editor[0].getElementsByTagName(tagname);
+				for (i = elements.length, j = savedelements.length - 1; i--; j--) {
+					if (j < 0 || elements[i] !== savedelements[j]) {
+						return elements[i];
+					}
+				}
+			};
+
+			var findinselection = function(tagname) {
 				var
 					i, len, el,
 					rng = savedselection,
@@ -657,15 +678,6 @@ neon.widget = (function() {
 								}
 							}
 						}
-						/*
-						// find previous element if it's non-microsoft
-						if (rng.startContainer && rng.startContainer.nodeType === 1 &&
-							rng.startOffset &&
-							rng.startContainer.childNodes[rng.startOffset-1].tagName
-								.toLowerCase() === tagname) {
-							return rng.startContainer.childNodes[rng.startOffset-1];
-						}
-						*/
 					}
 				}
 			};
@@ -695,6 +707,7 @@ neon.widget = (function() {
 					document.execCommand('useCSS', false, true);
 				} catch (e) {}
 				document.execCommand(command, false, param);
+				saveselection();
 				updatecontrols();
 				if (foc && foc !== editor[0] && foc !== document.activeElement) {
 					foc.focus();
@@ -834,7 +847,7 @@ neon.widget = (function() {
 
 				var onfocus = function() {
 					saveselection();
-					editlink = neon.select(findelement('a'));
+					editlink = neon.select(findinselection('a'));
 					urlinput[0].value = editlink.length ?
 						editlink[0].getAttribute('href') : '';
 					titleinput[0].value = editlink.length ?
@@ -889,9 +902,9 @@ neon.widget = (function() {
 					else {
 						docommand('unlink', null);
 						if (urlinput[0].value) {
+							saveelements('a');
 							docommand('createLink', urlinput[0].value);
-							saveselection();
-							editlink = neon.select(findelement('a'));
+							editlink = neon.select(findnewelement('a'));
 							if (editlink.length) {
 								if (titleinput[0].value) {
 									editlink.setAttribute('title', titleinput[0].value);
@@ -932,7 +945,7 @@ neon.widget = (function() {
 					}));
 
 				updators.push(function() {
-					if (findelement('a')) {
+					if (findinselection('a')) {
 						chooser.addClass('neon-widget-richtext-active');
 					}
 					else {
@@ -971,9 +984,9 @@ neon.widget = (function() {
 					var
 						i, j, temphr, table, tbody, row;
 					if (columnsinput[0].value > 0 && rowsinput[0].value > 0) {
+						saveelements('hr');
 						docommand('insertHorizontalRule', null);
-						saveselection();
-						temphr = neon.select(findelement('hr'));
+						temphr = neon.select(findnewelement('hr'));
 						if (temphr.length) {
 							table = neon.build({table:null});
 							tbody = table.append({tbody:null});
@@ -1013,7 +1026,7 @@ neon.widget = (function() {
 					}));
 
 				updators.push(function() {
-					if (findelement('table')) {
+					if (findinselection('table')) {
 						chooser.addClass('neon-widget-richtext-active');
 					}
 					else {
@@ -1045,7 +1058,7 @@ neon.widget = (function() {
 
 				var onfocus = function() {
 					saveselection();
-					editimage = neon.select(findelement('img'));
+					editimage = neon.select(findinselection('img'));
 					urlinput[0].value = editimage.length ?
 						editimage[0].getAttribute('src') : '';
 					altinput[0].value = editimage.length ?
@@ -1059,8 +1072,6 @@ neon.widget = (function() {
 				};
 
 				var onsubmit = function(evt) {
-					var
-						rng = savedselection;
 					if (urlinput[0].value &&
 						!/^[a-z][a-z0-9+.\-]*:/i.test(urlinput[0].value)) {
 						urlinput[0].value = "http://" + urlinput[0].value;
@@ -1082,9 +1093,9 @@ neon.widget = (function() {
 					}
 					else {
 						if (urlinput[0].value) {
+							saveelements('img');
 							docommand('insertImage', urlinput[0].value);
-							saveselection();
-							editimage = neon.select(findelement('img'));
+							editimage = neon.select(findnewelement('img'));
 							if (editimage.length) {
 								if (altinput[0].value) {
 									editimage.setAttribute('alt', altinput[0].value);
@@ -1118,7 +1129,7 @@ neon.widget = (function() {
 					}));
 
 				updators.push(function() {
-					if (findelement('img')) {
+					if (findinselection('img')) {
 						chooser.addClass('neon-widget-richtext-active');
 					}
 					else {
@@ -1300,10 +1311,17 @@ neon.widget = (function() {
 			'display:inline-block;width:5px')
 		.styleRule('.neon-widget-richtext-editor',
 			'max-height:27em')
+		.styleRule('.neon-widget-richtext-editor td, .neon-widget-richtext-editor th'+
+			'.neon-widget-richtext-editor div, .neon-widget-richtext-editor table, '+
+			'.neon-widget-richtext-editor img, .neon-widget-richtext-editor object',
+			'min-height:1em;min-width:1em;outline:1px dotted ButtonShadow')
+		.styleRule('.neon-widget-richtext-editor td, .neon-widget-richtext-editor th',
+			'height: 1.25em')
 	// outline:0 prevents dotted line in firefox
 	// position:relative is in case people paste in absolute positioned elements
+	// position:relative undone since it causes table editors in wrong place
 		.styleRule('div.neon-widget-richtext-editor',
-			'cursor:text;padding:1px 0 1px 2px;outline:0;position:relative;min-height:5em;overflow:auto')
+			'cursor:text;padding:1px 0 1px 2px;outline:0;min-height:5em;overflow:auto')
 	// min-height needed as textareas don't auto-expand
 		.styleRule('textarea.neon-widget-richtext-editor',
 			'width:100%;border:0;padding:0;margin:0;background:#fff;color:#000;font:inherit;min-height:14em')
