@@ -427,7 +427,7 @@ neon.widget = (function() {
 
 			var selectnone = function() {
 				updateselection(null);
-			}
+			};
 
 			var select = function(el) {
 				if (myopts.onselect) {
@@ -592,13 +592,17 @@ neon.widget = (function() {
 					}
 				}
 				else {
-					rng = document.selection.createRange();
-					if (rng.parentElement) {
-						par = rng.parentElement();
-						if (par === editor[0] || editor.contains(par)) {
-							return rng;
+					try {
+						// in ie, after deleting a table you can get createRange failing
+						rng = document.selection.createRange();
+						if (rng.parentElement) {
+							par = rng.parentElement();
+							if (par === editor[0] || editor.contains(par)) {
+								return rng;
+							}
 						}
 					}
+					catch (e) {}
 				}
 			};
 
