@@ -243,6 +243,47 @@ neon.widget = (function() {
 		return output.replace(/^\s+|\s+$/g, '');
 	};
 
+	var filterinplace = function(editor, acceptclasses) {
+		var
+			i, j, k,
+			classnames, found,
+			classlist = acceptclasses || [],
+			els = editor[0].getElementsByTagName('*'),
+			element;
+
+		for (i = els.length; i--;) {
+			element = neon.select(els[i]);
+
+			element.removeAttribute('style').removeAttribute('id')
+				.removeAttribute('for').removeAttribute('align');
+
+			if (element[0].tagName === 'a') {
+				element.removeAttribute('name');
+			}
+
+			if (element[0].className) {
+				classnames = element[0].className.split(/\s+/);
+				for (j = classnames.length; j--;) {
+					for (k = classlist.length, found = 0; k-- && !found;) {
+						if (classnames[j] === classlist[k]) {
+							found = 1;
+						}
+					}
+					if (!found) {
+						classnames.splice(j, 1);
+					}
+				}
+				element[0].className = classnames.join(' ') || null;
+			}
+
+			for (j = element[0].attributes.length; j--;) {
+				if (/^on/.test(element[0].attributes[j].name.toLowerCase())) {
+					element.removeAttribute(element[0].attributes[j].name);
+				}
+			}
+		}
+	};
+
 	var extendobject = function(obj, extension) {
 		var
 			Constructor = function() {},
