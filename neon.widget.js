@@ -71,7 +71,7 @@ neon.widget = (function() {
 			attname, attvalue,
 			classlist = acceptclasses || [],
 			classnames, found,
-			parsereg = /([\s\S]*?(?=<[\/\w!])|[\s\S]+)((?:<(\/?)([\w!\-]+)((?:[^>'"\-]+|-[^>'"\-]|"[\s\S]*?"|'[\s\S]*?'|--[\s\S]*?--)*)>?)?)/g,
+			parsereg = /([\s\S]*?(?=<[\/\w!])|[\s\S]+)((?:<(\/?)(!|[\w\-]+)((?:[^>'"\-]+|-[^>'"\-]|"[\s\S]*?"|'[\s\S]*?'|--[\s\S]*?--)*)>?)?)/g,
 				// 1: text; 2: tag; 3: slash; 4: tagname; 5: tagcontents; 6: endtext;
 			attribreg = /([^\s=]+)(?:\s*=\s*(?:(["'])([\s\S]*?)\2|(\S*)))?/g,
 				// 1: attname; 2: quotemark; 3: quotecontents; 4: nonquotecontents
@@ -185,7 +185,12 @@ neon.widget = (function() {
 			}
 
 			// process the actual tag
-			if (!strippara || 
+			if (tagname === '!') {
+				if (!/^(--)?\[(end)?if/i.test(matches[5])) {
+					output += '<!' + matches[5] + '>';
+				}
+			}
+			else if (!strippara || 
 				(tagname !== 'p' && (tagname !== 'br' || (topstack &&
 					topstack !== 'blockquote' && topstack !== 'center'))) ||
 				/\S/.test(matches[5])) {
@@ -193,10 +198,7 @@ neon.widget = (function() {
 				if (tagname && !filtertag.test(tagname)) {
 					// output tag
 					tagcode = "<" + (closetag || '') + (tagname || '');
-					if (tagname === '!') {
-						tagcode += matches[5];
-					}
-					else if (matches[5]) {
+					if (matches[5].length) {
 						// filter tag attributes
 						for (attmatches = attribreg.exec(matches[5]); attmatches;
 							attmatches = attribreg.exec(matches[5])) {
@@ -641,7 +643,8 @@ neon.widget = (function() {
 			container = el.insert({div:''})
 				.addClass('neon-widget-richtext'),
 			iconsize = myopts.iconsize || 14,
-			rawurl = opts.imageurl || 'images/neon-widget-richtext.png',
+			rawurl = myopts.imageurl || 'images/neon-widget-richtext.png',
+			acceptclasses = myopts.acceptclasses || [],
 			imageurl = (/^[^\/?#]+:|^\//).test(rawurl) ?
 				rawurl : neon.loaddir+rawurl,
 			teardowns = [];
@@ -788,6 +791,12 @@ neon.widget = (function() {
 				for (i = updators.length; i--;) {
 					updators[i]();
 				}
+			};
+
+			var onpaste = function() {
+				setTimeout(function() {
+					filterinplace(editor, acceptclasses);
+				}, 0);
 			};
 
 			var updateevent = function(evt) {
@@ -1353,12 +1362,14 @@ neon.widget = (function() {
 				editor.watch('keyup', updateevent);
 				editor.watch('mouseup', updateevent);
 				editor.watch('mouseleave', updateevent);
+				editor.watch('paste', onpaste);
 				toolbar.watch('mousedown', saveselection);
 
 				teardowns.push(function() {
 					editor.unwatch('keyup', updateevent)
 						.unwatch('mouseup', updateevent)
-						.unwatch('mouseleave', updateevent);
+						.unwatch('mouseleave', updateevent)
+						.unwatch('paste', onpaste);
 					toolbar.unwatch('mousedown', saveselection);
 				});
 			}
