@@ -62,12 +62,14 @@ neon.widget = (function() {
 			tagname, last,
 			delta = 0, lastdelta, // delta is +1 for moving into a block, -1 for leaving, 
 				// 0 for non-block
+			spanstack = [],
 			closetag = 0, lastclose, // whether there is/was a slash to indicate close tag
 			text,	tagcode,
 			popen = 0, pinitially, // whether a <p> is open
 			output = '',
 			stack = [],
 			topstack,
+			strip,
 			attname, attvalue,
 			classlist = acceptclasses || [],
 			classnames, found,
@@ -85,6 +87,7 @@ neon.widget = (function() {
 			last = tagname;
 			lastclose = closetag;
 			delta = 0;
+			strip = false;
 			tagname = closetag = null;
 			topstack = stack[stack.length-1];
 			popen = pinitially =
@@ -105,6 +108,7 @@ neon.widget = (function() {
 						delta = -1;
 						stack.pop();
 					}
+					spanstack = [];
 				}
 			}
 			text = matches[1];
@@ -179,7 +183,21 @@ neon.widget = (function() {
 					text = "\n" + text;
 				}
 			}
+			
+			// strip paragraphs?
+			if (strippara && 
+				(tagname === 'p' || (tagname === 'br' && (topstack ||
+					topstack === 'blockquote' || topstack === 'center'))) &&
+				!/\S/.test(matches[5])) {
+				strip = true;
+			}
+			// strip close tags for stripped spans
+			else if (closetag && tagname === 'span' &&
+				spanstack.length && spanstack.pop()) {
+				strip = true;
+			}
 
+			// start output
 			if (topstack !== 'style' && topstack !== 'script') {
 				output += text;
 			}
@@ -190,49 +208,53 @@ neon.widget = (function() {
 					output += '<!' + matches[5] + '>';
 				}
 			}
-			else if (!strippara || 
-				(tagname !== 'p' && (tagname !== 'br' || (topstack &&
-					topstack !== 'blockquote' && topstack !== 'center'))) ||
-				/\S/.test(matches[5])) {
+			else if (!strip && tagname && !filtertag.test(tagname)) {
 				
-				if (tagname && !filtertag.test(tagname)) {
-					// output tag
-					tagcode = "<" + (closetag || '') + (tagname || '');
-					if (matches[5].length) {
-						// filter tag attributes
-						for (attmatches = attribreg.exec(matches[5]); attmatches;
-							attmatches = attribreg.exec(matches[5])) {
-							attname = attmatches[1].toLowerCase();
-							attvalue = attmatches[4] || attmatches[3];
-							if (attname === 'class') {
-								// allow only classnames specified in the optional argument
-								classnames = attvalue.split(/\s+/);
-								for (i = classnames.length; i--; ) {
-									for (j = classlist.length, found = 0; j-- && !found; ) {
-										if (classnames[i] === classlist[j]) {
-											found = 1;
-										}
-									}
-									if (!found) {
-										classnames.splice(i, 1);
+				// output tag
+				tagcode = "<" + (closetag || '') + (tagname || '');
+				if (matches[5].length) {
+					// filter tag attributes
+					for (attmatches = attribreg.exec(matches[5]); attmatches;
+						attmatches = attribreg.exec(matches[5])) {
+						attname = attmatches[1].toLowerCase();
+						attvalue = attmatches[4] || attmatches[3];
+						if (attname === 'class') {
+							// allow only classnames specified in the optional argument
+							classnames = attvalue.split(/\s+/);
+							for (i = classnames.length; i--; ) {
+								for (j = classlist.length, found = 0; j-- && !found; ) {
+									if (classnames[i] === classlist[j]) {
+										found = 1;
 									}
 								}
-								attvalue = classnames.join(' ');
-								if (attvalue) {
-									tagcode += " class=\"" + attvalue + "\"";
+								if (!found) {
+									classnames.splice(i, 1);
 								}
 							}
-							else if (attname !== 'id' && attname !== 'for' &&
-								attname !== 'style' && attname !== 'align' &&
-								(attname !== 'name' || tagname !== 'a') &&
-								!/^on/.test(attname)) {
-								// allow only approved other attributes
-								tagcode += " " + attmatches[0];
+							attvalue = classnames.join(' ');
+							if (attvalue) {
+								tagcode += " class=\"" + attvalue + "\"";
 							}
 						}
+						else if (attname !== 'id' && attname !== 'for' &&
+							attname !== 'style' && attname !== 'align' &&
+							(attname !== 'name' || tagname !== 'a') &&
+							!/^on/.test(attname)) {
+							// allow only approved other attributes
+							tagcode += " " + attmatches[0];
+						}
 					}
-					tagcode += ">";
+				}
 
+				tagcode += ">";
+
+				// remove empty spans
+				if (!closetag && tagname === 'span') {
+					strip = tagcode === '<span>'; 
+					spanstack.push(strip);
+				}
+
+				if (!strip) {
 					output += tagcode;
 				}
 			}
