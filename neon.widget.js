@@ -75,7 +75,7 @@ neon.widget = (function() {
 				// 1: text; 2: tag; 3: slash; 4: tagname; 5: tagcontents; 6: endtext;
 			attribreg = /([^\s=]+)(?:\s*=\s*(?:(["'])([\s\S]*?)\2|(\S*)))?/g,
 				// 1: attname; 2: quotemark; 3: quotecontents; 4: nonquotecontents
-			blockreg = /^(?:h[1-6]|ul|ol|dl|menu|dir|pre|hr|blockquote|address|center|div|isindex|fieldset|table|style|script)$/,
+			blockreg = /^(?:h[1-6]|ul|ol|dl|menu|dir|pre|hr|blockquote|address|center|div|isindex|fieldset|table|style|(no)?script)$/,
 			blockseparator = /^(?:li|tr|div|dd|dt|the|tbo|tfo)/,
 			filtertag = /^(script|style|base|html|body|head|title|meta|link|font)$/;
 
