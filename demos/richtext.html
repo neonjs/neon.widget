@@ -4,17 +4,41 @@
 
 <head>
 	<title>Rich text editor test</title>
+<style>
+html {
+	font-family: sans-serif;
+	font-size: small;
+	padding: 1em 6%;
+}
+</style>
 <script type="text/javascript" src="../neonjs/neon.js"></script>
 <script type="text/javascript">
 
 neon.loaddir = '../neonjs/modules/';
 
 neon.load('../../neon.widget.js', function() {
-	neon.select('.richtext').widget('richtext', {
-		imageurl: '../../images/neon-widget-richtext.png',
-		fade: true,
-		htmlmode: true,
-		newwindowlinks: true
+	
+	neon.ready(function() {
+	
+		// create richtext control with all the trimmings
+		neon.select('.richtextfull').widget('richtext', {
+			imageurl: '../../images/neon-widget-richtext.png',
+			stylechooser: true,
+			listbuttons: true,
+			indentbuttons: true,
+			linkchooser: true,
+			imagechooser: true,
+			tablechooser: true,
+			htmlmode: true,
+			fade: true,
+			newwindowlinks: true
+		});
+
+		// create richtext control with pretty much defaults
+		neon.select('.richtext').widget('richtext', {
+			imageurl: '../../images/neon-widget-richtext.png',
+		});
+
 	});
 });
 
@@ -22,24 +46,30 @@ neon.load('../../neon.widget.js', function() {
 </head>
 
 <body>
-	<h1>Text field</h1>
-	<textarea name="myinput" class="richtext" cols="65" rows="8">
+
+	<h1>Rich text control demonstration</h1>
+
+	<h2>Example 1</h2>
+
+	<p>This rich text control was converted from a textarea containing HTML code.  Many options normally disabled by default have been enabled, presenting an editing control rich in features.</p>
+
+<textarea name="myinput" class="richtextfull" cols="65" rows="8">
 		&lt;p>  Line 1  &lt;br>  Line 2  &lt;/P>&lt;p>New para with &lt;a href="http://example.com" title="Abcd">link&lt;/a>&lt;/p>&lt;!--comment last-->&lt;P>Para after comment&lt;blockquote> &lt;!--comment--> &lt;p>Para in 
 block&lt;p> New para in block&lt;br>
 &amp;amp; New line&lt;/blockquote>&lt;h3>Heading
-3&lt;/h3>  Text outside P
+3&lt;/h3> Text outside P
 
 
-&lt;ul>&lt;li>Dotpoint1&lt;/li>&lt;li>Dotpoint2&lt;li>
-
-Dotpoint3&lt;/ul>END
+&lt;ul>&lt;li>Dotpoint1&lt;li>Dotpoint2&lt;/ul>END
 </textarea>
 
-<h2>Field 2</h2>
+<h2>Example 2</h2>
+
+<p>The following rich text control was converted from just a div element in the document, demonstrating that any element can be made editable on the fly.  Here, options are mostly left at their defaults, presenting a much simpler editing control.</p>
 
 <div class="richtext">
-	<p>This is a test</p>
-	<h2>This is a heading</h2>
+	<p>Here is some text inside the div.</p>
 </div>
+
 </body>
 </html>
