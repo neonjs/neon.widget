@@ -1346,7 +1346,7 @@ neon.widget = (function() {
 					.addClass('neon-widget-richtext-toolbar-altnotice');
 			}
 			else {
-				if (myopts.stylechooser || myopts.stylechooser === undefined) {
+				if (myopts.stylechooser) {
 					addstylechooser();
 					addseparator();
 				}
@@ -1362,18 +1362,20 @@ neon.widget = (function() {
 					addcommandbutton('outdent', 4, 'Decrease indent');
 					addcommandbutton('indent', 5, 'Increase indent');
 				}
-				if (myopts.linkchooser || myopts.linkchooser === undefined) {
+				if (myopts.linkchooser || myopts.linkchooser === undefined ||
+					myopts.imagechooser || myopts.tablecreator) {
 					addseparator();
-					addlinkchooser();
+					if (myopts.linkchooser || myopts.linkchooser === undefined) {
+						addlinkchooser();
+					}
+					if (myopts.imagechooser) {
+						addimagechooser();
+					}
+					if (myopts.tablechooser) {
+						addtablechooser();
+					}
 				}
-				if (myopts.imagechooser || myopts.imagechooser === undefined) {
-					addseparator();
-					addimagechooser();
-				}
-				if (myopts.tablecreator || myopts.tablecreator === undefined) {
-					addseparator();
-					addtablechooser();
-				}
+
 				if (myopts.htmlmode) {
 					addseparator();
 					addhtmlbutton();
