@@ -458,7 +458,6 @@ neon.widget = (function() {
 			for (i = hosts.length; i--;) {
 				neon.select(hosts[i]).insert(hosts[i].firstChild).remove();
 			}
-			obj = null;
 		};
 
 		// returns the flyout(s) itself (a div containing your contents)
@@ -634,6 +633,7 @@ neon.widget = (function() {
 			for (i = teardowns.length; i--;) {
 				teardowns[i]();
 			}
+			teardowns = [];
 			for (i = objects.length; i--;) {
 				objects[i].teardown();
 			}
@@ -669,7 +669,7 @@ neon.widget = (function() {
 			acceptclasses = myopts.acceptclasses || [],
 			imageurl = (/^[^\/?#]+:|^\//).test(rawurl) ?
 				rawurl : neon.loaddir+rawurl,
-			obj,
+			obj = {},
 			teardowns = [];
 
 		var setupeditor = function(container) {
@@ -1448,17 +1448,20 @@ neon.widget = (function() {
 				htmlconvert(source, !canedit, 0);
 
 			updatecontrols();
+
+			return obj;
 		};
 		
 		for (i = container.length; i--;) {
 			obj = setupeditor(neon.select(container[i]));
 		}
 
-		obj.teardowns = function() {
+		obj.teardown = function() {
 			var i;
 			for (i = teardowns.length; i--;) {
 				teardowns[i]();
 			}
+			teardowns = [];
 		};
 
 		return obj;
