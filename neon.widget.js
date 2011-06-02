@@ -669,6 +669,7 @@ neon.widget = (function() {
 			acceptclasses = myopts.acceptclasses || [],
 			imageurl = (/^[^\/?#]+:|^\//).test(rawurl) ?
 				rawurl : neon.loaddir+rawurl,
+			obj,
 			teardowns = [];
 
 		var setupeditor = function(container) {
@@ -689,6 +690,7 @@ neon.widget = (function() {
 				source,
 				savedselection = null, savedelements,
 				hiddenfield, form,
+				obj = {},
 				updators = [];
 
 			var getrange = function() {
@@ -1328,7 +1330,7 @@ neon.widget = (function() {
 				
 			};
 
-			var getvalue = function() {
+			obj.getvalue = function() {
 				return htmlconvert(
 					htmlmode ? htmleditor[0].value :
 					canedit ? editor[0].innerHTML :
@@ -1336,11 +1338,15 @@ neon.widget = (function() {
 			};
 
 			var updatehiddenfield = function() {
-				hiddenfield[0].value = getvalue();
+				hiddenfield[0].value = obj.getvalue();
 			};
 
+			teardowns.push(function() {
+				container.remove();
+			});
+
 			// now populate the toolbar
-			
+
 			if (!canedit) {
 				toolbar.append({div:"HTML tags accepted"})
 					.addClass('neon-widget-richtext-toolbar-altnotice');
@@ -1409,14 +1415,23 @@ neon.widget = (function() {
 				form = neon.select(hiddenfield[0].form);
 				form.watch('submit', updatehiddenfield);
 				teardowns.push(function() {
-					updatehiddenfield();
+					original[0].value = obj.getvalue();
+					hiddenfield.remove();
 					form.unwatch('submit', updatehiddenfield);
 				});
 			}
 			else {
 				source = original[0].innerHTML;
+				teardowns.push(function() {
+					original[0].innerHTML = obj.getvalue();
+				});
 			}
+
 			original.remove();
+			teardowns.push(function() {
+				container.insert(original);
+			});
+
 			editor[0][canedit ? 'innerHTML' : 'value'] =
 				htmlconvert(source, !canedit, 0);
 
@@ -1424,9 +1439,17 @@ neon.widget = (function() {
 		};
 		
 		for (i = container.length; i--;) {
-			setupeditor(neon.select(container[i]));
+			obj = setupeditor(neon.select(container[i]));
 		}
 
+		obj.teardowns = function() {
+			var i;
+			for (i = teardowns.length; i--;) {
+				teardowns[i]();
+			}
+		};
+
+		return obj;
 	};
 
 	neon.styleRule('.neon-widget-richtext',
