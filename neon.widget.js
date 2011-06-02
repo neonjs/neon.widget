@@ -1337,6 +1337,18 @@ neon.widget = (function() {
 					editor[0].value, 0, !htmlmode && !canedit);
 			};
 
+			obj.setvalue = function(value) {
+				if (htmlmode) {
+					htmleditor[0].value = htmlconvert(value);
+				}
+				else if (canedit) {
+					editor[0].innerHTML = htmlconvert(value);
+				}
+				else {
+					editor[0].value = htmlconvert(value, 1);
+				}
+			};
+
 			var updatehiddenfield = function() {
 				hiddenfield[0].value = obj.getvalue();
 			};
