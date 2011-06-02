@@ -19,9 +19,11 @@ neon.loaddir = '../neonjs/modules/';
 neon.load('../../neon.widget.js', function() {
 	
 	neon.ready(function() {
+		var
+			editor1, editor2;
 	
 		// create richtext control with all the trimmings
-		neon.select('.richtextfull').widget('richtext', {
+		editor1 = neon.select('.richtextfull').widget('richtext', {
 			imageurl: '../../images/neon-widget-richtext.png',
 			stylechooser: true,
 			listbuttons: true,
@@ -35,8 +37,13 @@ neon.load('../../neon.widget.js', function() {
 		});
 
 		// create richtext control with pretty much defaults
-		neon.select('.richtext').widget('richtext', {
+		editor2 = neon.select('.richtext').widget('richtext', {
 			imageurl: '../../images/neon-widget-richtext.png'
+		});
+
+		neon.select("#teardownbutton").watch('click', function() {
+			editor1.teardown();
+			editor2.teardown();
 		});
 
 	});
@@ -70,6 +77,12 @@ block&lt;p> New para in block&lt;br>
 <div class="richtext">
 	<p>Here is some text inside the div.</p>
 </div>
+
+<h2>Teardown</h2>
+
+<p>You can close the rich text editor and return it to the way it was before at any time using the editor's teardown() function.</p>
+
+<p><button id="teardownbutton">Teardown</button></p>
 
 </body>
 </html>
