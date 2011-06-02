@@ -60,16 +60,16 @@ neon.widget = (function() {
 			i, j,
 			matches, attmatches,
 			tagname, last,
+			isblock = false, lastblock,
 			delta = 0, lastdelta, // delta is +1 for moving into a block, -1 for leaving, 
 				// 0 for non-block
-			spanstack = [],
+			elstack = {'span':[],'a':[],'div':[],'form':[]},
 			closetag = 0, lastclose, // whether there is/was a slash to indicate close tag
-			text,	tagcode,
+			text,	tagcontents,
 			popen = 0, pinitially, // whether a <p> is open
 			output = '',
 			stack = [],
 			topstack,
-			strip,
 			attname, attvalue,
 			classlist = acceptclasses || [],
 			classnames, found,
@@ -77,48 +77,129 @@ neon.widget = (function() {
 				// 1: text; 2: tag; 3: slash; 4: tagname; 5: tagcontents; 6: endtext;
 			attribreg = /([^\s=]+)(?:\s*=\s*(?:(["'])([\s\S]*?)\2|(\S*)))?/g,
 				// 1: attname; 2: quotemark; 3: quotecontents; 4: nonquotecontents
-			blockreg = /^(?:h[1-6]|ul|ol|dl|menu|dir|pre|hr|blockquote|address|center|div|isindex|fieldset|table|style|(no)?script)$/,
+			blockreg = /^(?:h[1-6]|ul|ol|dl|menu|dir|pre|hr|blockquote|address|center|div|isindex|form|fieldset|table|style|(no)?script)$/,
 			blockseparator = /^(?:li|tr|div|dd|dt|the|tbo|tfo)/,
 			filtertag = /^(script|style|base|html|body|head|title|meta|link|font)$/;
 
 		for (matches = parsereg.exec(input); matches; matches = parsereg.exec(input)) {
 
 			lastdelta = delta;
+			lastblock = isblock;
 			last = tagname;
 			lastclose = closetag;
 			delta = 0;
-			strip = false;
-			tagname = closetag = null;
 			topstack = stack[stack.length-1];
 			popen = pinitially =
 				lastdelta ? 0 :
 				last !== 'p' ? popen :
 				lastclose ? 0 : 1;
-			if (matches[4]) {
-				tagname = matches[4].toLowerCase();
-				closetag = matches[3];
-				if (blockreg.test(tagname)) {
-					if (!closetag) {
-						if (tagname !== 'hr' && tagname !== 'isindex') {
-							delta = 1;
-							stack.push(tagname);
-						}
+			text = matches[1];
+			closetag = matches[3];
+			tagname = matches[4] ? matches[4].toLowerCase() : '';
+			tagcontents = '';
+			isblock = tagname && blockreg.test(tagname);
+			if (isblock) {
+				for (i in elstack) {
+					if (elstack.hasOwnProperty(i) && !blockreg.test(i)) {
+						elstack[i] = [];
 					}
-					else if (tagname === topstack) {
-						delta = -1;
-						stack.pop();
-					}
-					spanstack = [];
 				}
 			}
-			text = matches[1];
 
+			// filter some elements all the time
+			if (filtertag.test(tagname)) {
+				tagname = '';
+			}
+
+			// filter MS conditional comments
+			if (tagname === '!' && /^(--)?\[(end)?if/i.test(matches[5])) {
+				tagname = '';
+			}
+		
+			// get and filter tag contents (attributes)
+			if (tagname && matches[5].length) {
+				if (tagname === '!') {
+					tagcontents = matches[5];
+				}
+				else {
+					for (attmatches = attribreg.exec(matches[5]); attmatches;
+						attmatches = attribreg.exec(matches[5])) {
+						attname = attmatches[1].toLowerCase();
+						attvalue = attmatches[4] || attmatches[3];
+						// filter class attribute
+						if (attname === 'class') {
+							// allow only classnames specified in the optional argument
+							classnames = attvalue.split(/\s+/);
+							for (i = classnames.length; i--; ) {
+								for (j = classlist.length, found = 0; j-- && !found; ) {
+									if (classnames[i] === classlist[j]) {
+										found = 1;
+									}
+								}
+								if (!found) {
+									classnames.splice(i, 1);
+								}
+							}
+							attvalue = classnames.join(' ');
+							if (attvalue) {
+								tagcontents += " class=\"" + attvalue + "\"";
+							}
+						}
+						else if (attname !== 'id' && attname !== 'for' &&
+							attname !== 'style' && attname !== 'align' &&
+							(attname !== 'name' || tagname !== 'a') &&
+							!/^on/.test(attname)) {
+							// allow only approved other attributes
+							tagcontents += " " + attmatches[0];
+						}
+					}
+				}
+			}
+
+			// strip certain elements when empty
+			if (tagname && elstack.hasOwnProperty(tagname)) {
+				if (!closetag) {
+					elstack[tagname].push(!tagcontents);
+					if (!tagcontents) {
+						tagname = '';
+					}
+				}
+				else if (elstack[tagname].length && elstack[tagname].pop()) {
+					tagname = '';
+				}
+			}
+			
+			// strip paragraphs?
+			if (strippara && 
+				(tagname === 'p' || (tagname === 'br' && (topstack ||
+					topstack === 'blockquote' || topstack === 'center' ||
+					topstack === 'form'))) &&
+				!tagcontents) {
+				tagname = '';
+			}
+
+			// calculate block nesting and delta
+			if (tagname && isblock &&
+				tagname !== 'hr' && tagname !== 'isindex') {
+				if (!closetag) {
+					delta = 1;
+					stack.push(tagname);
+				}
+				else if (tagname === topstack) {
+					delta = -1;
+					stack.pop();
+				}
+			}
+
+			// clean up text and paragraphs
 			if (topstack !== 'pre') {
 				// process paragraphs
-				if (!topstack || topstack === 'blockquote' || topstack === 'center' || popen) {
+				if (!topstack || topstack === 'blockquote' || topstack === 'center' ||
+					topstack === 'form' || popen) {
 					// add missing <p> at start
 					if (!popen && (/\S/.test(text) ||
-						(tagname && !delta && tagname !== '!' && tagname !== 'p'))) {
+						(tagname && !delta && tagname !== '!' && tagname !== 'p' &&
+						tagname !== 'hr' && tagname !== 'isindex'))) {
 						popen = 1;
 						text = '<p>' + text.replace(/^\s*/, '');
 					}
@@ -126,7 +207,7 @@ neon.widget = (function() {
 						// add missing </p> at end
 						if (delta ||
 							(!closetag && tagname === 'p') ||
-							!tagname ||
+							//!tagname ||
 							(wstopara && /\n\r?\n\s*$/.test(text))
 							) {
 							popen = 0;
@@ -143,16 +224,16 @@ neon.widget = (function() {
 					}
 				}
 				// remove leading spaces
-				if (lastdelta || !last ||
+				if (lastdelta || //!last ||
 					(!pinitially && (!topstack || topstack === 'blockquote' ||
-						topstack === 'center')) ||
+						topstack === 'center' || topstack === 'form')) ||
 					last === 'p' || last === 'br' || blockseparator.test(last)) {
 					text = text.replace(/^\s+/, '');
 				}
 				// remove trailing spaces
-				if (delta || !tagname ||
+				if (delta || //!tagname ||
 					(!popen && (!topstack || topstack === 'blockquote' ||
-						topstack === 'center')) ||
+						topstack === 'center' || topstack === 'form')) ||
 					tagname === 'p' || tagname === 'br' || blockseparator.test(tagname)) {
 					text = text.replace(/\s+$/, '');
 				}
@@ -184,80 +265,16 @@ neon.widget = (function() {
 				}
 			}
 			
-			// strip paragraphs?
-			if (strippara && 
-				(tagname === 'p' || (tagname === 'br' && (topstack ||
-					topstack === 'blockquote' || topstack === 'center'))) &&
-				!/\S/.test(matches[5])) {
-				strip = true;
-			}
-			// strip close tags for stripped spans
-			else if (closetag && tagname === 'span' &&
-				spanstack.length && spanstack.pop()) {
-				strip = true;
-			}
-
-			// start output
+			// output the text before the tag
 			if (topstack !== 'style' && topstack !== 'script') {
 				output += text;
 			}
 
-			// process the actual tag
-			if (tagname === '!') {
-				if (!/^(--)?\[(end)?if/i.test(matches[5])) {
-					output += '<!' + matches[5] + '>';
-				}
+			// output the tag
+			if (tagname) {
+				output += "<" + (closetag || '') + tagname + tagcontents + ">";
 			}
-			else if (!strip && tagname && !filtertag.test(tagname)) {
-				
-				// output tag
-				tagcode = "<" + (closetag || '') + (tagname || '');
-				if (matches[5].length) {
-					// filter tag attributes
-					for (attmatches = attribreg.exec(matches[5]); attmatches;
-						attmatches = attribreg.exec(matches[5])) {
-						attname = attmatches[1].toLowerCase();
-						attvalue = attmatches[4] || attmatches[3];
-						if (attname === 'class') {
-							// allow only classnames specified in the optional argument
-							classnames = attvalue.split(/\s+/);
-							for (i = classnames.length; i--; ) {
-								for (j = classlist.length, found = 0; j-- && !found; ) {
-									if (classnames[i] === classlist[j]) {
-										found = 1;
-									}
-								}
-								if (!found) {
-									classnames.splice(i, 1);
-								}
-							}
-							attvalue = classnames.join(' ');
-							if (attvalue) {
-								tagcode += " class=\"" + attvalue + "\"";
-							}
-						}
-						else if (attname !== 'id' && attname !== 'for' &&
-							attname !== 'style' && attname !== 'align' &&
-							(attname !== 'name' || tagname !== 'a') &&
-							!/^on/.test(attname)) {
-							// allow only approved other attributes
-							tagcode += " " + attmatches[0];
-						}
-					}
-				}
 
-				tagcode += ">";
-
-				// remove empty spans
-				if (!closetag && tagname === 'span') {
-					strip = tagcode === '<span>'; 
-					spanstack.push(strip);
-				}
-
-				if (!strip) {
-					output += tagcode;
-				}
-			}
 		}
 		// close last p tag
 		if (popen && !strippara && !delta && (tagname !== 'p' || !closetag)) {
