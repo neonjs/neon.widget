@@ -1068,16 +1068,18 @@ neon.widget = (function() {
 
 				flyoutform.watch('submit', onsubmit);
 				cancelbutton.watch('click', cancel);
-				teardowns.push(function() {
-					flyoutform.unwatch('submit', onsubmit);
-					cancelbutton.unwatch('click', cancel);
-				});
 
 				flyout = widgets.flyout(chooser, extendobject(myopts, {
 					contents: flyoutform,
 					onfocus: onfocus,
 					onblur: restoreselection
 					}));
+
+				teardowns.push(function() {
+					flyout.teardown();
+					flyoutform.unwatch('submit', onsubmit);
+					cancelbutton.unwatch('click', cancel);
+				});
 
 				updators.push(function() {
 					if (findinselection('a')) {
@@ -1149,16 +1151,18 @@ neon.widget = (function() {
 
 				flyoutform.watch('submit', onsubmit);
 				cancelbutton.watch('click', cancel);
-				teardowns.push(function() {
-					flyoutform.unwatch('submit', onsubmit);
-					cancelbutton.unwatch('click', cancel);
-				});
 
 				flyout = widgets.flyout(chooser, extendobject(myopts, {
 					contents: flyoutform,
 					onfocus: onfocus,
 					onblur: restoreselection
 					}));
+
+				teardowns.push(function() {
+					flyout.teardown();
+					flyoutform.unwatch('submit', onsubmit);
+					cancelbutton.unwatch('click', cancel);
+				});
 
 				updators.push(function() {
 					if (findinselection('table')) {
@@ -1252,16 +1256,18 @@ neon.widget = (function() {
 
 				flyoutform.watch('submit', onsubmit);
 				cancelbutton.watch('click', cancel);
-				teardowns.push(function() {
-					flyoutform.unwatch('submit', onsubmit);
-					cancelbutton.unwatch('click', cancel);
-				});
 
 				flyout = widgets.flyout(chooser, extendobject(myopts, {
 					contents: flyoutform,
 					onfocus: onfocus,
 					onblur: restoreselection
 					}));
+
+				teardowns.push(function() {
+					flyout.teardown();
+					flyoutform.unwatch('submit', onsubmit);
+					cancelbutton.unwatch('click', cancel);
+				});
 
 				updators.push(function() {
 					if (findinselection('img')) {
