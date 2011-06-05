@@ -210,7 +210,7 @@ neon.widget = (function() {
 				tagname = '';
 			}
 
-			if (!tagname) {
+			if (!tagname && matches[4]) {
 				keeptext = text;
 			}
 			else {
