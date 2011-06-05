@@ -59,13 +59,13 @@ neon.widget = (function() {
 		var
 			i, j,
 			matches, attmatches,
-			tagname, last,
-			isblock = false, lastblock,
-			delta = 0, lastdelta, // delta is +1 for moving into a block, -1 for leaving, 
+			tagname, last = '',
+			isblock = false, lastblock = false,
+			delta = 0, lastdelta = 0, // delta is +1 for moving into a block, -1 for leaving, 
 				// 0 for non-block
 			elstack = {'span':[],'a':[],'div':[],'form':[]},
 			closetag = 0, lastclose, // whether there is/was a slash to indicate close tag
-			text,	tagcontents,
+			keeptext = '', text,	tagcontents,
 			popen = 0, pinitially, // whether a <p> is open
 			output = '',
 			stack = [],
@@ -84,31 +84,32 @@ neon.widget = (function() {
 
 		for (matches = parsereg.exec(input); matches; matches = parsereg.exec(input)) {
 
-			lastdelta = delta;
-			last = tagname;
-			lastblock = last && isblock;
-			lastclose = closetag;
-			needslinebreak = nextlinebreak;
-			nextlinebreak = false;
+			if (tagname) {
+				lastdelta = delta;
+				last = tagname;
+				lastblock = isblock;
+				lastclose = closetag;
+				needslinebreak = nextlinebreak;
+				nextlinebreak = false;
+			}
 			delta = 0;
 			topstack = stack[stack.length-1];
 			popen = pinitially =
 				lastdelta ? 0 :
 				last !== 'p' ? popen :
 				lastclose ? 0 : 1;
-			text = matches[1];
 			closetag = matches[3];
 			tagname = matches[4] ? matches[4].toLowerCase() : '';
 			tagcontents = '';
+			text = keeptext + matches[1];
+			keeptext = '';
 			isblock = tagname && blockreg.test(tagname);
-			if (isblock) {
+			if (lastblock || last === 'p') {
 				for (i in elstack) {
 					if (elstack.hasOwnProperty(i) && !blockreg.test(i)) {
 						elstack[i] = [];
 					}
 				}
-			}
-			if (lastblock || last === 'p') {
 				hasinline = needslinebreak = false;
 			}
 			hasinline = hasinline || 
@@ -173,7 +174,7 @@ neon.widget = (function() {
 						tagname = '';
 					}
 				}
-				else if (elstack[tagname].length && elstack[tagname].pop()) {
+				else if (!elstack[tagname].length || elstack[tagname].pop()) {
 					tagname = '';
 				}
 				if (!tagname && isblock && hasinline) {
@@ -209,97 +210,105 @@ neon.widget = (function() {
 				tagname = '';
 			}
 
-			// clean up text and paragraphs
-			if (topstack !== 'pre') {
-				// process paragraphs
-				if (!topstack || topstack === 'blockquote' || topstack === 'center' ||
-					topstack === 'form' || popen) {
-					// add missing <p> at start
-					if (!popen && (
+			if (!tagname) {
+				keeptext = text;
+			}
+			else {
+
+				// clean up text and paragraphs
+				if (topstack !== 'pre') {
+					// process paragraphs
+					if (!topstack || topstack === 'blockquote' || topstack === 'center' ||
+						topstack === 'form' || popen) {
+						// add missing <p> at start
+						if (!popen && (
+							(!delta && tagname && tagname !== '!' && tagname !== 'p' &&
+							tagname !== 'hr' && tagname !== 'isindex') ||
+							/\S/.test(text))) {
+							popen = 1;
+							text = text.replace(/^\s*/, '<p>');
+						}
+						if (popen) {
+							// add missing </p> at end
+							if (delta ||
+								(!closetag && tagname === 'p') ||
+								//!tagname ||
+								(wstopara && /\n\r?\n\s*$/.test(text))
+								) {
+								popen = 0;
+								hasinline = needslinebreak = false;
+								text = text.replace(/\s*$/, '</p>');
+							}
+							// add paragraph breaks within based on whitespace
+							if (wstopara) {
+								if (last === 'br') {
+									text = text.replace(/^\s+/, '');
+								}
+								text = text.replace(/\s*\n\r?\n\s*(?=\S)/g, '</p><p>')
+									.replace(/\s*\n\s*/g, '<br>');
+							}
+						}
+					}
+					// add br to account for removed div, form, etc
+					if (needslinebreak && (
 						(!delta && tagname && tagname !== '!' && tagname !== 'p' &&
 						tagname !== 'hr' && tagname !== 'isindex') ||
 						/\S/.test(text))) {
-						popen = 1;
-						text = text.replace(/^\s*/, '<p>');
+						text = text.replace(/^\s*/, '<br>');
+						needslinebreak = false;
 					}
-					if (popen) {
-						// add missing </p> at end
-						if (delta ||
-							(!closetag && tagname === 'p') ||
-							//!tagname ||
-							(wstopara && /\n\r?\n\s*$/.test(text))
-							) {
-							popen = 0;
-							hasinline = needslinebreak = false;
-							text = text.replace(/\s*$/, '</p>');
-						}
-						// add paragraph breaks within based on whitespace
-						if (wstopara) {
-							if (last === 'br') {
-								text = text.replace(/^\s+/, '');
-							}
-							text = text.replace(/\s*\n\r?\n\s*(?=\S)/g, '</p><p>')
-								.replace(/\s*\n\s*/g, '<br>');
-						}
+					// remove leading spaces
+					if (lastdelta || //!last ||
+						(!pinitially && (!topstack || topstack === 'blockquote' ||
+							topstack === 'center' || topstack === 'form')) ||
+						last === 'p' || last === 'br' || blockseparator.test(last)) {
+						text = text.replace(/^\s+/, ''); 
+					}
+					// remove trailing spaces
+					if (delta || //!tagname ||
+						(!popen && (!topstack || topstack === 'blockquote' ||
+							topstack === 'center' || topstack === 'form')) ||
+						tagname === 'p' || tagname === 'br' || blockseparator.test(tagname)) {
+						text = text.replace(/\s+$/, '');
+					}
+					// normalise remaining whitespace
+					text = text.replace(/\s+/g, ' ');
+					// convert < and & where it is not part of tag or entity
+					text = strippara ? 
+						text.replace(/&lt;(?![\/\w!])/g, '<').replace(/&amp;(?![\w#])/g, '&') :
+						text.replace(/<(?![\/\w!])/g, '&lt;').replace(/&(?![\w#])/g, '&amp;');
+
+					// account for added para tags
+					text = strippara ? text.replace(/<\/?\w+>/g, "\n") :
+						text.replace(/<p>/g, "\n<p>").replace(/<\/p>/g, "</p>\n")
+						.replace(/<br>/g, "<br>\n");
+					// add newline at end (before tag)
+					if (
+						delta === 1 || (!popen && tagname === '!') || 
+						tagname === 'hr' || tagname === 'isindex' ||
+						(!closetag && (tagname === 'p' || blockseparator.test(tagname))) || 
+						(closetag && (tagname === 'table' || tagname === 'ul' || tagname === 'ol' || tagname === 'dl'))
+						) {
+						text += "\n";
+					}
+					// add newline at start (after last tag)
+					if (
+						lastdelta === -1 || (!pinitially && last === '!') ||
+						last === 'hr' || last === 'isindex' ||
+						(lastclose && last === 'p') ||
+						last === 'br') {
+						text = "\n" + text;
 					}
 				}
-				// add br to account for removed div, form, etc
-				if (needslinebreak && (
-					(!delta && tagname && tagname !== '!' && tagname !== 'p' &&
-					tagname !== 'hr' && tagname !== 'isindex') ||
-					/\S/.test(text))) {
-					text = text.replace(/^\s*/, '<br>');
-					needslinebreak = false;
-				}
-				// remove leading spaces
-				if (lastdelta || //!last ||
-					(!pinitially && (!topstack || topstack === 'blockquote' ||
-						topstack === 'center' || topstack === 'form')) ||
-					last === 'p' || last === 'br' || blockseparator.test(last)) {
-					text = text.replace(/^\s+/, ''); 
-				}
-				// remove trailing spaces
-				if (delta || //!tagname ||
-					(!popen && (!topstack || topstack === 'blockquote' ||
-						topstack === 'center' || topstack === 'form')) ||
-					tagname === 'p' || tagname === 'br' || blockseparator.test(tagname)) {
-					text = text.replace(/\s+$/, '');
-				}
-				// normalise remaining whitespace
-				text = text.replace(/\s+/g, ' ');
-				// convert < and & where it is not part of tag or entity
-				text = strippara ? 
-					text.replace(/&lt;(?![\/\w!])/g, '<').replace(/&amp;(?![\w#])/g, '&') :
-					text.replace(/<(?![\/\w!])/g, '&lt;').replace(/&(?![\w#])/g, '&amp;');
+				
+				if (topstack !== 'style' && topstack !== 'script') {
+					// output the text before the tag
+					output += text;
 
-				// account for added para tags
-				text = strippara ? text.replace(/<\/?\w+>/g, "\n") :
-					text.replace(/<p>/g, "\n<p>").replace(/<\/p>/g, "</p>\n")
-					.replace(/<br>/g, "<br>\n");
-				// add newline at end (before tag)
-				if (
-					delta === 1 || (!popen && tagname === '!') || 
-					(!closetag && (tagname === 'p' || blockseparator.test(tagname))) || 
-					(closetag && (tagname === 'table' || tagname === 'ul' || tagname === 'ol' || tagname === 'dl'))
-					) {
-					text += "\n";
-				}
-				// add newline at start (after last tag)
-				if (
-					lastdelta === -1 || (!pinitially && last === '!') ||
-					(lastclose && last === 'p') ||
-					last === 'br') {
-					text = "\n" + text;
-				}
-			}
-			
-			if (topstack !== 'style' && topstack !== 'script') {
-				// output the text before the tag
-				output += text;
-
-				// output the tag
-				if (tagname) {
-					output += "<" + (closetag || '') + tagname + tagcontents + ">";
+					// output the tag
+					if (tagname) {
+						output += "<" + (closetag || '') + tagname + tagcontents + ">";
+					}
 				}
 			}
 		}
