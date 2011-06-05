@@ -70,7 +70,7 @@ neon.widget = (function() {
 			output = '',
 			stack = [],
 			topstack,
-			hasinline = false, needslinebreak = false,
+			hasinline = false, needslinebreak = false, nextlinebreak = false,
 			attname, attvalue,
 			classlist = acceptclasses || [],
 			classnames, found,
@@ -78,16 +78,18 @@ neon.widget = (function() {
 				// 1: text; 2: tag; 3: slash; 4: tagname; 5: tagcontents; 6: endtext;
 			attribreg = /([^\s=]+)(?:\s*=\s*(?:(["'])([\s\S]*?)\2|(\S*)))?/g,
 				// 1: attname; 2: quotemark; 3: quotecontents; 4: nonquotecontents
-			blockreg = /^(?:h[1-6]|ul|ol|dl|menu|dir|pre|hr|blockquote|address|center|div|isindex|form|fieldset|table|style|(no)?script)$/,
+			blockreg = /^(?:h[1-6]|ul|ol|dl|menu|dir|pre|hr|blockquote|address|center|div|isindex|form|fieldset|table|style|(no)?script|section|article|aside|hgroup|header|footer|nav|figure)$/,
 			blockseparator = /^(?:li|tr|div|dd|dt|the|tbo|tfo)/,
-			filtertag = /^(script|style|base|html|body|head|title|meta|link|font)$/;
+			filtertag = /^(base|html|body|head|title|meta|link|font)$/;
 
 		for (matches = parsereg.exec(input); matches; matches = parsereg.exec(input)) {
 
 			lastdelta = delta;
-			lastblock = isblock;
 			last = tagname;
+			lastblock = last && isblock;
 			lastclose = closetag;
+			needslinebreak = nextlinebreak;
+			nextlinebreak = false;
 			delta = 0;
 			topstack = stack[stack.length-1];
 			popen = pinitially =
@@ -175,7 +177,7 @@ neon.widget = (function() {
 					tagname = '';
 				}
 				if (!tagname && isblock && hasinline) {
-					needslinebreak = true;
+					nextlinebreak = true;
 				}
 			}
 			
@@ -201,6 +203,12 @@ neon.widget = (function() {
 				}
 			}
 
+			// filter script and style but still record their block nesting
+			// so we can filter their contents
+			if (tagname === 'script' || tagname === 'style') {
+				tagname = '';
+			}
+
 			// clean up text and paragraphs
 			if (topstack !== 'pre') {
 				// process paragraphs
@@ -214,7 +222,6 @@ neon.widget = (function() {
 						popen = 1;
 						text = text.replace(/^\s*/, '<p>');
 					}
-					// add <br /> at start to fill in for removed tags
 					if (popen) {
 						// add missing </p> at end
 						if (delta ||
@@ -236,15 +243,20 @@ neon.widget = (function() {
 						}
 					}
 				}
-				if (needslinebreak) {
-					text = text.replace(/s*$/, '<br>');
-					needslinebreak = hasinline = false;
+				// add br to account for removed div, form, etc
+				if (needslinebreak && (
+					(!delta && tagname && tagname !== '!' && tagname !== 'p' &&
+					tagname !== 'hr' && tagname !== 'isindex') ||
+					/\S/.test(text))) {
+					text = text.replace(/^s*/, '<br>');
+					needslinebreak = false;
 				}
 				// remove leading spaces
 				if (lastdelta || //!last ||
 					(!pinitially && (!topstack || topstack === 'blockquote' ||
 						topstack === 'center' || topstack === 'form')) ||
-					last === 'p' || last === 'br' || blockseparator.test(last)) {
+					last === 'p' || last === 'br' || blockseparator.test(last) ||
+					(!last && /\s$/.test(output))) {
 					text = text.replace(/^\s+/, '');
 				}
 				// remove trailing spaces
@@ -282,16 +294,15 @@ neon.widget = (function() {
 				}
 			}
 			
-			// output the text before the tag
 			if (topstack !== 'style' && topstack !== 'script') {
+				// output the text before the tag
 				output += text;
-			}
 
-			// output the tag
-			if (tagname) {
-				output += "<" + (closetag || '') + tagname + tagcontents + ">";
+				// output the tag
+				if (tagname) {
+					output += "<" + (closetag || '') + tagname + tagcontents + ">";
+				}
 			}
-
 		}
 		// close last p tag
 		if (popen && !strippara && !delta && (tagname !== 'p' || !closetag)) {
