@@ -35,7 +35,7 @@ See http://neonjs.com for documentation and examples of use.
 
 */
 
-/*jslint browser:true,newcap:true,undef:true */
+/*jslint browser:true,newcap:true,undef:true,type:true */
 /*global neon:true,Range,opera */
 
 /**
@@ -70,6 +70,7 @@ neon.widget = (function() {
 			output = '',
 			stack = [],
 			topstack,
+			hasinline = false, needslinebreak = false,
 			attname, attvalue,
 			classlist = acceptclasses || [],
 			classnames, found,
@@ -105,6 +106,12 @@ neon.widget = (function() {
 					}
 				}
 			}
+			if (lastblock || last === 'p') {
+				hasinline = needslinebreak = false;
+			}
+			hasinline = hasinline || 
+				(text && /\S/.test(text)) ||
+				(last && !lastblock && last !== '!' && last !== 'p');
 
 			// filter some elements all the time
 			if (filtertag.test(tagname)) {
@@ -167,6 +174,9 @@ neon.widget = (function() {
 				else if (elstack[tagname].length && elstack[tagname].pop()) {
 					tagname = '';
 				}
+				if (!tagname && isblock && hasinline) {
+					needslinebreak = true;
+				}
 			}
 			
 			// strip paragraphs?
@@ -197,12 +207,14 @@ neon.widget = (function() {
 				if (!topstack || topstack === 'blockquote' || topstack === 'center' ||
 					topstack === 'form' || popen) {
 					// add missing <p> at start
-					if (!popen && (/\S/.test(text) ||
-						(tagname && !delta && tagname !== '!' && tagname !== 'p' &&
-						tagname !== 'hr' && tagname !== 'isindex'))) {
+					if (!popen && (
+						(!delta && tagname && tagname !== '!' && tagname !== 'p' &&
+						tagname !== 'hr' && tagname !== 'isindex') ||
+						/\S/.test(text))) {
 						popen = 1;
-						text = '<p>' + text.replace(/^\s*/, '');
+						text = text.replace(/^\s*/, '<p>');
 					}
+					// add <br /> at start to fill in for removed tags
 					if (popen) {
 						// add missing </p> at end
 						if (delta ||
@@ -211,7 +223,8 @@ neon.widget = (function() {
 							(wstopara && /\n\r?\n\s*$/.test(text))
 							) {
 							popen = 0;
-							text = text.replace(/\s*$/, '') + '</p>';
+							hasinline = needslinebreak = false;
+							text = text.replace(/\s*$/, '</p>');
 						}
 						// add paragraph breaks within based on whitespace
 						if (wstopara) {
@@ -222,6 +235,10 @@ neon.widget = (function() {
 								.replace(/\s*\n\s*/g, '<br>');
 						}
 					}
+				}
+				if (needslinebreak) {
+					text = text.replace(/s*$/, '<br>');
+					needslinebreak = hasinline = false;
 				}
 				// remove leading spaces
 				if (lastdelta || //!last ||
