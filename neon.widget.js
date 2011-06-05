@@ -248,16 +248,15 @@ neon.widget = (function() {
 					(!delta && tagname && tagname !== '!' && tagname !== 'p' &&
 					tagname !== 'hr' && tagname !== 'isindex') ||
 					/\S/.test(text))) {
-					text = text.replace(/^s*/, '<br>');
+					text = text.replace(/^\s*/, '<br>');
 					needslinebreak = false;
 				}
 				// remove leading spaces
 				if (lastdelta || //!last ||
 					(!pinitially && (!topstack || topstack === 'blockquote' ||
 						topstack === 'center' || topstack === 'form')) ||
-					last === 'p' || last === 'br' || blockseparator.test(last) ||
-					(!last && /\s$/.test(output))) {
-					text = text.replace(/^\s+/, '');
+					last === 'p' || last === 'br' || blockseparator.test(last)) {
+					text = text.replace(/^\s+/, ''); 
 				}
 				// remove trailing spaces
 				if (delta || //!tagname ||
