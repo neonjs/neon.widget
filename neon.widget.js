@@ -82,6 +82,8 @@ neon.widget = (function() {
 			blockseparator = /^(?:li|tr|div|dd|dt|the|tbo|tfo)/,
 			filtertag = /^(base|html|body|head|title|meta|link|font)$/;
 
+		input += " ";
+
 		for (matches = parsereg.exec(input); matches; matches = parsereg.exec(input)) {
 
 			if (tagname) {
@@ -89,9 +91,9 @@ neon.widget = (function() {
 				last = tagname;
 				lastblock = isblock;
 				lastclose = closetag;
-				needslinebreak = nextlinebreak;
-				nextlinebreak = false;
 			}
+			needslinebreak = nextlinebreak;
+			nextlinebreak = false;
 			delta = 0;
 			topstack = stack[stack.length-1];
 			popen = pinitially =
@@ -101,8 +103,7 @@ neon.widget = (function() {
 			closetag = matches[3];
 			tagname = matches[4] ? matches[4].toLowerCase() : '';
 			tagcontents = '';
-			text = keeptext + matches[1];
-			keeptext = '';
+			text = matches[1];
 			isblock = tagname && blockreg.test(tagname);
 			if (lastblock || last === 'p') {
 				for (i in elstack) {
@@ -210,52 +211,56 @@ neon.widget = (function() {
 				tagname = '';
 			}
 
-			if (!tagname && matches[4]) {
-				keeptext = text;
-			}
-			else {
-
-				// clean up text and paragraphs
-				if (topstack !== 'pre') {
-					// process paragraphs
-					if (!topstack || topstack === 'blockquote' || topstack === 'center' ||
-						topstack === 'form' || popen) {
-						// add missing <p> at start
-						if (!popen && (
-							(!delta && tagname && tagname !== '!' && tagname !== 'p' &&
-							tagname !== 'hr' && tagname !== 'isindex') ||
-							/\S/.test(text))) {
-							popen = 1;
-							text = text.replace(/^\s*/, '<p>');
-						}
-						if (popen) {
-							// add missing </p> at end
-							if (delta ||
-								(!closetag && tagname === 'p') ||
-								//!tagname ||
-								(wstopara && /\n\r?\n\s*$/.test(text))
-								) {
-								popen = 0;
-								hasinline = needslinebreak = false;
-								text = text.replace(/\s*$/, '</p>');
-							}
-							// add paragraph breaks within based on whitespace
-							if (wstopara) {
-								if (last === 'br') {
-									text = text.replace(/^\s+/, '');
-								}
-								text = text.replace(/\s*\n\r?\n\s*(?=\S)/g, '</p><p>')
-									.replace(/\s*\n\s*/g, '<br>');
-							}
-						}
-					}
-					// add br to account for removed div, form, etc
-					if (needslinebreak && (
+			// clean up text and paragraphs
+			if (topstack !== 'pre') {
+				// process paragraphs
+				if (!topstack || topstack === 'blockquote' || topstack === 'center' ||
+					topstack === 'form' || popen) {
+					// add missing <p> at start
+					if (!popen && (
 						(!delta && tagname && tagname !== '!' && tagname !== 'p' &&
 						tagname !== 'hr' && tagname !== 'isindex') ||
 						/\S/.test(text))) {
-						text = text.replace(/^\s*/, '<br>');
-						needslinebreak = false;
+						popen = 1;
+						text = text.replace(/^\s*/, '<p>');
+					}
+					if (popen) {
+						// add missing </p> at end
+						if (delta ||
+							(!closetag && tagname === 'p') ||
+							//!tagname ||
+							(wstopara && /\n\r?\n\s*$/.test(text))
+							) {
+							popen = 0;
+							hasinline = needslinebreak = false;
+							text = text.replace(/\s*$/, '</p>');
+						}
+					}
+				}
+				// add br to account for removed div, form, etc
+				if (needslinebreak && (
+					(!delta && tagname && tagname !== '!' && tagname !== 'p' &&
+					tagname !== 'hr' && tagname !== 'isindex') ||
+					/\S/.test(text))) {
+					text = text.replace(/^\s*/, '<br>');
+					needslinebreak = false;
+				}
+			}
+
+			keeptext += text;
+
+			if (tagname || !matches[4]) {
+				text = keeptext;
+				keeptext = '';
+				if (topstack !== 'pre') {
+
+					// add paragraph breaks within based on whitespace
+					if (popen && wstopara) {
+						if (last === 'br') {
+							text = text.replace(/^\s+/, '');
+						}
+						text = text.replace(/\s*\n\r?\n\s*(?=\S)/g, '</p><p>')
+							.replace(/\s*\n\s*/g, '<br>');
 					}
 					// remove leading spaces
 					if (lastdelta || //!last ||
