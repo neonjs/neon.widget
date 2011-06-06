@@ -48,7 +48,7 @@ http://neonjs.com/license
 neon.widget = (function() {
 	
 	var
-		canedit = document.body.contentEditable !== undefined,
+		canedit = 0 && document.body.contentEditable !== undefined,
 		gid = 0,
 		widgets = {};
 	
@@ -208,19 +208,54 @@ neon.widget = (function() {
 					.replace(/\s*\n\s*/g, '<br>');
 			}
 
-			// remove leading spaces
-			if (lasttag.isblock ||
-				(!popen && topnotext) ||
-				lasttag.isblocksep || lasttag.name === 'p' || lasttag.name === 'br') {
-				text = text.replace(/^\s+/, '');
+			if (topstack !== 'pre') {
+
+				// remove leading spaces
+				if (lasttag.isblock ||
+					(!popen && topnotext) ||
+					lasttag.isblocksep || lasttag.name === 'p' || lasttag.name === 'br') {
+					text = text.replace(/^\s+/, '');
+				}
+
+				// remove trailing spaces
+				if (tag.isblock ||
+					(!popen && topnotext) ||
+					tag.isblocksep || tag.name === 'p' || tag.name === 'br') {
+					text = text.replace(/\s+$/, '');
+				}
+
+				// normalise remaining whitespace
+				text = text.replace(/\s+/g, ' ');
 			}
 
-			// remove trailing spaces
-			if (tag.isblock ||
-				(!popen && topnotext) ||
-				tag.isblocksep || tag.name === 'p' || tag.name === 'br') {
-				text = text.replace(/\s+$/, '');
+			// convert < and & where it is not part of tag or entity
+			text = strippara ? 
+				text.replace(/&lt;(?![\/\w!])/g, '<').replace(/&amp;(?![\w#])/g, '&') :
+				text.replace(/<(?![\/\w!])/g, '&lt;').replace(/&(?![\w#])/g, '&amp;');
+
+			// account for added para tags
+			text = strippara ? text.replace(/<\/?\w+>/g, "\n") :
+				text.replace(/<p>/g, "\n<p>").replace(/<\/p>/g, "</p>\n")
+				.replace(/<br>/g, "<br>\n");
+
+			// add new line at end (before tag)
+			if ((tag.isblock && !tag.close) || (topnotext && tag.name === '!') ||
+				tag.name === 'hr' || tag.name === 'isindex' ||
+				(!tag.close && (tag.name === 'p' || tag.isblocksep)) ||
+				(tag.close && (tag.name === 'table' || tag.name === 'ul' ||
+					tag.name === 'ol' || tag.name === 'dl'))) {
+				text += "\n";
 			}
+
+			// add new line at start (after last tag)
+			if ((lasttag.isblock && lasttag.close) || (topnotext && lasttag.name === '!') ||
+				lasttag.name === 'hr' || lasttag.name === 'isindex' ||
+				(lasttag.close && lasttag.name === 'p') ||
+				lasttag.name === 'br') {
+				text = "\n" + text;
+			}
+
+			// no more using topstack after this point
 
 			// calculate block nesting after this tag
 			if (tag.isblock &&
@@ -534,6 +569,7 @@ neon.widget = (function() {
 
 		return output.replace(/^\s+|\s+$/g, '');
 	};
+
 	var filterinplace = function(editor, acceptclasses) {
 		var
 			i, j, k,
