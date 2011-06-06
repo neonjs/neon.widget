@@ -1026,7 +1026,9 @@ neon.widget = (function() {
 					htmleditor.style('height', ((pos.bottom - pos.top || 200) + 1) + "px");
 					toolbar.style('display', 'none');
 					editor.style('display', 'none');
-					htmleditor[0].focus();
+					setTimeout(function() {
+						htmleditor[0].focus();
+					}, 0);
 				};
 
 				var onclickoff = function() {
@@ -1036,7 +1038,9 @@ neon.widget = (function() {
 					htmlmode = false;
 					htmltoolbar.style('display', 'none');
 					htmleditor.style('display', 'none');
-					editor[0].focus();
+					setTimeout(function() {
+						editor[0].focus();
+					}, 0);
 				};
 
 				onbutton = addbutton(toolbar, "Edit as HTML", onclickon);
