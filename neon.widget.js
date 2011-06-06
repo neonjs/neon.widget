@@ -828,6 +828,32 @@ neon.widget = (function() {
 				}
 			};
 
+			var makeparagraph = function() {
+			// ensures that text under current cursor is in paragraph tag rather than
+			// bare at top level
+				var
+					obj,
+					rng = savedselection;
+				// IE we don't need to worry
+				// opera I don't think we need to worry
+				// FF4 has <br> directly in the editor
+				// chrome has bare editor at start, or an empty div, or a div containing only br
+				if (rng && rng.startContainer) {
+					obj = rng.startContainer.childNodes.length &&
+						rng.startContainer.childNodes[rng.startOffset] ?
+						rng.startContainer.childNodes[rng.startOffset] : rng.startContainer;
+
+					if ((obj.parentNode === editor[0] && obj.tagName.toLowerCase() === 'br') ||
+						(obj === editor[0] && !editor[0].childNodes.length) ||
+						(obj.parentNode.parentNode === editor[0] &&
+							obj.parentNode.tagName.toLowerCase() === 'div' &&
+							(!obj.parentNode.childNodes.length || (obj.parentNode.childNodes.length === 1 &&
+								obj.tagName.toLowerCase() === 'br')))) {
+						docommand('formatblock', '<p>');
+					}
+				}
+			};
+
 			var findinselection = function(tagname) {
 				var
 					i, len, el,
@@ -870,6 +896,7 @@ neon.widget = (function() {
 			var updatecontrols = function() {
 				var i;
 				saveselection();
+				makeparagraph();
 				for (i = updators.length; i--;) {
 					updators[i]();
 				}
@@ -1004,6 +1031,9 @@ neon.widget = (function() {
 					htmleditor.style('height', ((pos.bottom - pos.top || 200) + 1) + "px");
 					toolbar.style('display', 'none');
 					editor.style('display', 'none');
+					setTimeout(function() {
+						htmleditor[0].focus();
+					}, 0);
 				};
 
 				var onclickoff = function() {
@@ -1013,6 +1043,9 @@ neon.widget = (function() {
 					htmlmode = false;
 					htmltoolbar.style('display', 'none');
 					htmleditor.style('display', 'none');
+					setTimeout(function() {
+						editor[0].focus();
+					}, 0);
 				};
 
 				onbutton = addbutton(toolbar, "Edit as HTML", onclickon);
@@ -1550,6 +1583,12 @@ neon.widget = (function() {
 			'display:inline-block;width:5px')
 		.styleRule('.neon-widget-richtext-editor',
 			'max-height:27em')
+		.styleRule('.neon-widget-richtext-editor:focus',
+			'outline:none')
+		.styleRule('.neon-widget-richtext-editor :first-child',
+			'margin-top:0')
+		.styleRule('.neon-widget-richtext-editor :last-child',
+			'margin-bottom:0')
 		.styleRule('.neon-widget-richtext-editor td, .neon-widget-richtext-editor th'+
 			'.neon-widget-richtext-editor div, .neon-widget-richtext-editor table, '+
 			'.neon-widget-richtext-editor img, .neon-widget-richtext-editor object',
