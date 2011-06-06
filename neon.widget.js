@@ -58,12 +58,219 @@ neon.widget = (function() {
 	// from whitespace
 		var
 			i, j,
+
+			// regular expression to parse input tag by tag
+			// 1: text; 2: tag; 3: slash; 4: tagname; 5: tagcontents; 6: endtext;
+			parsereg = /([\s\S]*?(?=<[\/\w!])|[\s\S]+)((?:<(\/?)(!|[\w\-]+)((?:[^>'"\-]+|-[^>'"\-]|"[\s\S]*?"|'[\s\S]*?'|--[\s\S]*?--)*)>?)?)/g,
+
+			// regular expression to parse attributes
+			// 1: attname; 2: quotemark; 3: quotecontents; 4: nonquotecontents
+			attribreg = /([^\s=]+)(?:\s*=\s*(?:(["'])([\s\S]*?)\2|(\S*)))?/g,
+
+			// block level, structural, no optional tags
+			blockreg = /^(?:h[1-6]|ul|ol|dl|menu|dir|pre|hr|blockquote|address|center|div|isindex|form|fieldset|table|style|(no)?script|section|article|aside|hgroup|header|footer|nav|figure)$/,
+
+			// elements that separate lines, lesser than the above blocks, 
+			// may have optional tags
+			blockseparator = /^(?:li|tr|div|dd|dt|thead|tbody|tfoot)$/,
+
+			// always filter these elements
+			filtertag = /^(base|html|body|head|title|meta|link|font)$/,
+
+			// filter these elements sometimes, keep a stack for each since
+			// they might have optional tags
+			elstack = {'span':[],'a':[],'div':[],'form':[],'label':[]},
+
+			lasttag, tag = {},
+			att = {},
+			stack = [], topstack = null, topnotext = true,
+			popen = false,
+
+			attribs,
+			classlist = acceptclasses || [],
+			classnames, found,
+
+			text = '', output = '',
+			textfull,
+
+			matches;
+
+		for (matches = parsereg.exec(input); matches; matches = parsereg.exec(input)) {
+
+			text += matches[1];
+			textfull = /\S/.test(text);
+
+			if (tag) {
+				lasttag = tag;
+			}
+			tag = {
+				close: matches[3] || '',
+				name: matches[4] ? matches[4].toLowerCase() : '!',
+				contents: matches[5] || '',
+				strip: !matches[4]
+			};
+			tag.isblock = tag.name && blockreg.test(tag.name);
+			tag.isblocksep = !tag.isblock && blockseparator.test(tag.name);
+			tag.hasinline = !tag.isblock && !tag.isblocksep && tag.name !== 'p' &&
+				tag.name !== '!' && tag.name !== 'td' && tag.name !== 'th';
+			
+			// filter some tags all the time
+			if (filtertag.test(tag.name)) {
+				tag = null;
+				continue;
+			}
+
+			// filter MS conditional elements
+			if (tag.name === '!' && /^(--)?\[(end)?if/i.test(tag.contents)) {
+				tag = null;
+				continue;
+			}
+
+			if ((topstack === 'script' || topstack === 'style') &&
+				(tag.name !== 'script' && tag.name !== 'style')) {
+				tag = null;
+				text = '';
+				continue;
+			}
+		
+			// get and filter tag contents (attributes)
+			if (tag.contents.length && tag.name !== '!') {
+
+				attribs = '';
+				for (matches = attribreg.exec(tag.contents); matches;
+					matches = attribreg.exec(tag.contents)) {
+
+					att = {
+						full: matches[0],
+						name: matches[1].toLowerCase(),
+						value: matches[4] || matches[3]
+					};
+
+					// filter class attribute
+					if (att.name === 'class') {
+						// allow only classnames specified in the optional argument
+						classnames = att.value.split(/\s+/);
+						for (i = classnames.length; i--; ) {
+							for (j = classlist.length, found = 0; j-- && !found; ) {
+								if (classnames[i] === classlist[j]) {
+									found = 1;
+								}
+							}
+							if (!found) {
+								classnames.splice(i, 1);
+							}
+						}
+						if (classnames.length) {
+							attribs += " class=\"" + classnames.join(' ') + "\"";
+						}
+					}
+					else if (att.name !== 'id' && att.name !== 'for' &&
+						att.name !== 'style' && att.name !== 'align' &&
+						(att.name !== 'name' || tag.name !== 'a') &&
+						!/^on/.test(att.name)) {
+						// allow only approved other attributes
+						attribs += " " + att.full;
+					}
+				}
+				tag.contents = attribs;
+			}
+
+			// from this point, no turning back
+
+
+			// strip paragraphs?
+			if (strippara &&
+				(tag.name === 'p' || (tag.name === 'br' && topnotext)) &&
+				!tag.contents) {
+
+				tag.strip = true;
+			}
+
+			popen = lasttag.isblock ? false :
+				lasttag.name !== 'p' ? popen :
+				lasttag.close ? false : true;
+			
+			// add implied paragraph tags
+			if (popen || topnotext) {
+
+				if (!popen && (textfull || tag.hasinline)) {
+					text = text.replace(/^\s*/, '<p>');
+					popen = true;
+				}
+				if (popen && (tag.isblock || (!tag.close && tag.name === 'p'))) {
+					text = text.replace(/\s*$/, '</p>');
+				}
+			}
+
+			// ws to para
+			if (popen && wstopara) {
+				text = text.replace(/\s*\n\r?\n\s*(?=\S)/g, '</p><p>')
+					.replace(/\s*\n\s*/g, '<br>');
+			}
+
+			// remove leading spaces
+			if (lasttag.isblock ||
+				(!popen && topnotext) ||
+				lasttag.isblocksep || lasttag.name === 'p' || lasttag.name === 'br') {
+				text = text.replace(/^\s+/, '');
+			}
+
+			// remove trailing spaces
+			if (tag.isblock ||
+				(!popen && topnotext) ||
+				tag.isblocksep || tag.name === 'p' || tag.name === 'br') {
+				text = text.replace(/\s+$/, '');
+			}
+
+			// calculate block nesting after this tag
+			if (tag.isblock &&
+				tag.name !== 'hr' && tag.name !== 'isindex') {
+				
+				if (!tag.close) {
+					topstack = tag.name;
+					stack.push(topstack);
+					topnotext = topstack === 'blockquote' ||
+						topstack === 'center' || topstack === 'form';
+				}
+				else if (tag.name === topstack) {
+					stack.pop();
+					topstack = stack[stack.length - 1] || null;
+					topnotext = !topstack || topstack === 'blockquote' ||
+						topstack === 'center' || topstack === 'form';
+				}
+
+				// filter script and style
+				if (tag.name === 'script' || tag.name === 'style') {
+					tag.strip = 1;
+				}
+			}
+
+			output += text;
+
+			if (!tag.strip) {
+				output += "<" + (tag.close || '') + tag.name + tag.contents + ">";
+			}
+
+			text = '';
+		}
+
+		output += text;
+
+		return output.replace(/^\s+|\s+$/g, '');
+	};
+
+	var htmlconvert2 = function(input, strippara, wstopara, acceptclasses) {
+	// helper function for normalising HTML
+	// can strip paragraph tags or generate paragraph tags
+	// from whitespace
+		var
+			i, j,
 			matches, attmatches,
 			tagname, last = '',
-			isblock = false, lastblock = false,
+			isblock = false, immedlastblock = false,
 			delta = 0, lastdelta = 0, // delta is +1 for moving into a block, -1 for leaving, 
 				// 0 for non-block
-			elstack = {'span':[],'a':[],'div':[],'form':[]},
+			elstack = {'span':[],'a':[],'div':[],'form':[],'label':[]},
 			closetag = 0, lastclose, // whether there is/was a slash to indicate close tag
 			keeptext = '', text,	tagcontents,
 			popen = 0, pinitially, // whether a <p> is open
@@ -89,9 +296,9 @@ neon.widget = (function() {
 			if (tagname) {
 				lastdelta = delta;
 				last = tagname;
-				lastblock = isblock;
 				lastclose = closetag;
 			}
+			immedlastblock = isblock;
 			needslinebreak = nextlinebreak;
 			nextlinebreak = false;
 			delta = 0;
@@ -105,7 +312,8 @@ neon.widget = (function() {
 			tagcontents = '';
 			text = matches[1];
 			isblock = tagname && blockreg.test(tagname);
-			if (lastblock || last === 'p') {
+			if (immedlastblock || last === 'p' || last === 'td' || last === 'th' ||
+				blockseparator.test(last)) {
 				for (i in elstack) {
 					if (elstack.hasOwnProperty(i) && !blockreg.test(i)) {
 						elstack[i] = [];
@@ -115,7 +323,9 @@ neon.widget = (function() {
 			}
 			hasinline = hasinline || 
 				(text && /\S/.test(text)) ||
-				(last && !lastblock && last !== '!' && last !== 'p');
+				(last && !immedlastblock && last !== '!' && last !== 'p' &&
+				last !== 'td' && last !== 'th' &&
+				!blockseparator(last));
 
 			// filter some elements all the time
 			if (filtertag.test(tagname)) {
@@ -324,7 +534,6 @@ neon.widget = (function() {
 
 		return output.replace(/^\s+|\s+$/g, '');
 	};
-
 	var filterinplace = function(editor, acceptclasses) {
 		var
 			i, j, k,
