@@ -48,7 +48,7 @@ http://neonjs.com/license
 neon.widget = (function() {
 	
 	var
-		canedit = 0 && document.body.contentEditable !== undefined,
+		canedit = document.body.contentEditable !== undefined,
 		gid = 0,
 		widgets = {};
 	
