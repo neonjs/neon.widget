@@ -199,7 +199,6 @@ neon.widget = (function() {
 					}
 					else if (att.name !== 'id' && att.name !== 'for' &&
 						att.name !== 'style' && att.name !== 'align' &&
-						att.name !== '_moz_dirty' &&
 						(att.name !== 'name' || tag.name !== 'a') &&
 						!/^on/.test(att.name)) {
 						// allow only approved other attributes
