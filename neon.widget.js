@@ -199,6 +199,7 @@ neon.widget = (function() {
 					}
 					else if (att.name !== 'id' && att.name !== 'for' &&
 						att.name !== 'style' && att.name !== 'align' &&
+						att.name !== '_moz_dirty' &&
 						(att.name !== 'name' || tag.name !== 'a') &&
 						!/^on/.test(att.name)) {
 						// allow only approved other attributes
@@ -786,13 +787,22 @@ neon.widget = (function() {
 					sel, rng, par;
 				if (window.getSelection) {
 					sel = window.getSelection();
+					// if empty editor, full it with a <p></p> and select.
+					// this avoids bug with firefox #550434?
+					if (!editor[0].childNodes.length) {
+						sel.removeAllRanges();
+						rng = document.createRange();
+						rng.selectNodeContents(editor.append({p:null})[0]);
+						sel.addRange(rng);
+					}
 					if (sel.rangeCount &&
 						// only use collapsed selection when focused (opera workaround)
 						(!sel.isCollapsed || editor[0] === document.activeElement ||
 						editor.contains(document.activeElement))) {
 
 						rng = sel.getRangeAt(0);
-						if (rng.commonAncestorContainer === editor[0] ||
+						if ((rng.commonAncestorContainer === editor[0] &&
+							editor[0].childNodes.lengtj) ||
 							editor.contains(rng.commonAncestorContainer)) {
 							return rng;
 						}
@@ -899,7 +909,6 @@ neon.widget = (function() {
 
 			var updatecontrols = function() {
 				var i;
-				saveselection();
 				for (i = updators.length; i--;) {
 					updators[i]();
 				}
@@ -937,12 +946,9 @@ neon.widget = (function() {
 						rng.startContainer.childNodes[rng.startOffset] ?
 						rng.startContainer.childNodes[rng.startOffset] : rng.startContainer;
 
-					if ((obj.parentNode === editor[0] && obj.tagName.toLowerCase() === 'br') ||
-						(obj === editor[0] && !editor[0].childNodes.length) ||
-						(obj.parentNode.parentNode === editor[0] &&
-							obj.parentNode.tagName.toLowerCase() === 'div' &&
-							(!obj.parentNode.childNodes.length || (obj.parentNode.childNodes.length === 1 &&
-								obj.tagName.toLowerCase() === 'br')))) {
+					if (obj.parentNode === editor[0] &&
+						(obj.nodeType === 3 || obj.tagName.toLowerCase() === 'br' ||
+						obj.tagName.toLowerCase() === 'div')) {
 						docommand('formatblock', '<p>');
 					}
 				}
@@ -955,10 +961,11 @@ neon.widget = (function() {
 			};
 
 			var updateevent = function(evt) {
+				saveselection();
+				makeparagraph();
 				if ((evt.which < 65 && evt.which !== 32) ||
-					evt.which > 122) {
+					evt.which > 122 || evt.ctrlKey) {
 					setTimeout(function() {
-						makeparagraph();
 						updatecontrols();
 					}, 0);
 				}
@@ -1075,6 +1082,7 @@ neon.widget = (function() {
 					htmleditor.style('display', 'none');
 					setTimeout(function() {
 						editor[0].focus();
+						saveselection();
 					}, 0);
 				};
 
@@ -1574,6 +1582,7 @@ neon.widget = (function() {
 			editor[0][canedit ? 'innerHTML' : 'value'] =
 				htmlconvert(source, !canedit, 0);
 
+			saveselection();
 			updatecontrols();
 
 			return obj;
