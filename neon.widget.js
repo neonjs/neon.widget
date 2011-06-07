@@ -86,19 +86,21 @@ neon.widget = (function() {
 			stack = [], topstack = null, topnotext = true,
 			popen = false,
 
+			needslinebreak = false,
+
 			attribs,
 			classlist = acceptclasses || [],
 			classnames, found,
 
-			text = '', output = '',
+			text = '', newtext, output = '',
 			textfull,
 
 			matches;
 
-		for (matches = parsereg.exec(input); matches; matches = parsereg.exec(input)) {
+		for (matches = parsereg.exec(input); matches;
+			matches = parsereg.exec(input)) {
 
-			text += matches[1];
-			textfull = /\S/.test(text);
+			newtext = matches[1];
 
 			if (tag) {
 				lasttag = tag;
@@ -113,6 +115,17 @@ neon.widget = (function() {
 			tag.isblocksep = !tag.isblock && blockseparator.test(tag.name);
 			tag.hasinline = !tag.isblock && !tag.isblocksep && tag.name !== 'p' &&
 				tag.name !== '!' && tag.name !== 'td' && tag.name !== 'th';
+
+			// add in replacement break if necessary
+			if (needslinebreak && (tag.hasinline || /\S/.test(newtext))) {
+				text = text.replace(/\s+$/, '');
+				newtext = newtext.replace(/^\s*/, '<br>');
+				needslinebreak = false;
+			}
+
+			// add newtext to cumlative text - we treat it as all one from now
+			text += newtext;
+			textfull = /\S/.test(text);
 			
 			// filter some tags all the time
 			if (filtertag.test(tag.name)) {
