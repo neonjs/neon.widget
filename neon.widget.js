@@ -246,7 +246,9 @@ neon.widget = (function() {
 			// add implied paragraph tags
 			if (popen || topnotext) {
 
-				if (!popen && (textfull || tag.hasinline)) {
+				if (!popen && (textfull ||
+					(!tag.strip && !tag.isblock && !tag.isblocksep &&
+					tag.name !== '!'))) {
 					text = text.replace(/^\s*/, '<p>');
 					popen = true;
 				}
