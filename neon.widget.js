@@ -72,10 +72,14 @@ neon.widget = (function() {
 
 			// elements that separate lines, lesser than the above blocks, 
 			// may have optional tags
-			blockseparator = /^(?:li|tr|div|dd|dt|thead|tbody|tfoot)$/,
+			blockseparator = /^(?:p|li|tr|div|dd|dt|thead|tbody|tfoot)$/,
 
 			// always filter these elements
 			filtertag = /^(base|html|body|head|title|meta|link|font)$/,
+
+			// these elements imply an inline context (just as text would)
+			// cannot include anything from elstack
+			hasinlinereg = /^(?:img|applet|button|iframe|input|map|object|select|textarea)$/,
 
 			// filter these elements sometimes, keep a stack for each since
 			// they might have optional tags
@@ -86,6 +90,7 @@ neon.widget = (function() {
 			stack = [], topstack = null, topnotext = true,
 			popen = false,
 
+			inlinecontext = false,
 			needslinebreak = false,
 
 			attribs,
@@ -113,20 +118,29 @@ neon.widget = (function() {
 			};
 			tag.isblock = tag.name && blockreg.test(tag.name);
 			tag.isblocksep = !tag.isblock && blockseparator.test(tag.name);
-			tag.hasinline = !tag.isblock && !tag.isblocksep && tag.name !== 'p' &&
-				tag.name !== '!' && tag.name !== 'td' && tag.name !== 'th';
+			tag.hasinline = !tag.isblock && !tag.isblocksep && hasinlinereg.test(tag.name);
 
 			// add in replacement break if necessary
-			if (needslinebreak && (tag.hasinline || /\S/.test(newtext))) {
-				text = text.replace(/\s+$/, '');
-				newtext = newtext.replace(/^\s*/, '<br>');
-				needslinebreak = false;
+			if (needslinebreak) {
+				if (tag.hasinline || /\S/.test(newtext)) {
+					text = text.replace(/\s+$/, '');
+					newtext = newtext.replace(/^\s*/, '<br>');
+					needslinebreak = false;
+				}
+				else if (lasttag.isblock || lasttag.isblocksep || lasttag.name === 'br') {
+					needslinebreak = false;
+				}
 			}
 
 			// add newtext to cumlative text - we treat it as all one from now
 			text += newtext;
 			textfull = /\S/.test(text);
 			
+			// work out if we have inline context up to this point
+			inlinecontext = textfull || lasttag.hasinline ? true :
+				lasttag.isblock || lasttag.isblocksep || lasttag.name === 'br' ? false :
+				inlinecontext;
+
 			// filter some tags all the time
 			if (filtertag.test(tag.name)) {
 				tag = null;
@@ -200,6 +214,9 @@ neon.widget = (function() {
 					tag = null;
 				}
 				if (!tag) {
+					if (inlinecontext) {
+						needslinebreak = true;
+					}
 					continue;
 				}
 			}
@@ -242,14 +259,14 @@ neon.widget = (function() {
 				// remove leading spaces
 				if (lasttag.isblock ||
 					(!popen && topnotext) ||
-					lasttag.isblocksep || lasttag.name === 'p' || lasttag.name === 'br') {
+					lasttag.isblocksep || lasttag.name === 'br') {
 					text = text.replace(/^\s+/, '');
 				}
 
 				// remove trailing spaces
 				if (tag.isblock ||
 					(!popen && topnotext) ||
-					tag.isblocksep || tag.name === 'p' || tag.name === 'br') {
+					tag.isblocksep || tag.name === 'br') {
 					text = text.replace(/\s+$/, '');
 				}
 
@@ -268,16 +285,16 @@ neon.widget = (function() {
 				.replace(/<br>/g, "<br>\n");
 
 			// add new line at end (before tag)
-			if ((tag.isblock && !tag.close) || (topnotext && tag.name === '!') ||
+			if ((tag.isblock && !tag.close) || (topnotext && !popen && tag.name === '!') ||
 				tag.name === 'hr' || tag.name === 'isindex' ||
-				(!tag.close && (tag.name === 'p' || tag.isblocksep)) ||
+				(!tag.close && (tag.isblocksep)) ||
 				(tag.close && (tag.name === 'table' || tag.name === 'ul' ||
 					tag.name === 'ol' || tag.name === 'dl'))) {
 				text += "\n";
 			}
 
 			// add new line at start (after last tag)
-			if ((lasttag.isblock && lasttag.close) || (topnotext && lasttag.name === '!') ||
+			if ((lasttag.isblock && lasttag.close) || (topnotext && !popen && lasttag.name === '!') ||
 				lasttag.name === 'hr' || lasttag.name === 'isindex' ||
 				(lasttag.close && lasttag.name === 'p') ||
 				lasttag.name === 'br') {
@@ -350,7 +367,7 @@ neon.widget = (function() {
 			attribreg = /([^\s=]+)(?:\s*=\s*(?:(["'])([\s\S]*?)\2|(\S*)))?/g,
 				// 1: attname; 2: quotemark; 3: quotecontents; 4: nonquotecontents
 			blockreg = /^(?:h[1-6]|ul|ol|dl|menu|dir|pre|hr|blockquote|address|center|div|isindex|form|fieldset|table|style|(no)?script|section|article|aside|hgroup|header|footer|nav|figure)$/,
-			blockseparator = /^(?:li|tr|div|dd|dt|the|tbo|tfo)/,
+			blockseparator = /^(?:li|tr|div|dd|dt|thead|tbody|tfoot)$/,
 			filtertag = /^(base|html|body|head|title|meta|link|font)$/;
 
 		input += " ";
