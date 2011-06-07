@@ -107,7 +107,7 @@ neon.widget = (function() {
 			}
 			tag = {
 				close: matches[3] || '',
-				name: matches[4] ? matches[4].toLowerCase() : '!',
+				name: matches[4] ? matches[4].toLowerCase() : 'neon-widget-end',
 				contents: matches[5] || '',
 				strip: !matches[4]
 			};
@@ -188,8 +188,23 @@ neon.widget = (function() {
 				tag.contents = attribs;
 			}
 
-			// from this point, no turning back
+			// strip certain elements when the start tag has no attributes
+			if (elstack.hasOwnProperty(tag.name)) {
+				if (!tag.close) {
+					elstack[tag.name].push(!tag.contents);
+					if (!tag.contents) {
+						tag = null;
+					}
+				}
+				else if (!elstack[tag.name].length || elstack[tag.name].pop()) {
+					tag = null;
+				}
+				if (!tag) {
+					continue;
+				}
+			}
 
+			// from this point, no turning back
 
 			// strip paragraphs?
 			if (strippara &&
@@ -210,7 +225,8 @@ neon.widget = (function() {
 					text = text.replace(/^\s*/, '<p>');
 					popen = true;
 				}
-				if (popen && (tag.isblock || (!tag.close && tag.name === 'p'))) {
+				if (popen && (tag.isblock || (!tag.close && tag.name === 'p') ||
+					tag.name === 'neon-widget-end')) {
 					text = text.replace(/\s*$/, '</p>');
 				}
 			}
