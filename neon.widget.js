@@ -92,6 +92,7 @@ neon.widget = (function() {
 
 			inlinecontext = false,
 			needslinebreak = false,
+			prelayers = 0,
 
 			attribs,
 			classlist = acceptclasses || [],
@@ -268,7 +269,7 @@ neon.widget = (function() {
 					.replace(/\s*\n\s*/g, '<br>');
 			}
 
-			if (topstack !== 'pre') {
+			if (!prelayers) {
 
 				// remove leading spaces
 				if (lasttag.isblock ||
@@ -298,22 +299,24 @@ neon.widget = (function() {
 				text.replace(/<p>/g, "\n<p>").replace(/<\/p>/g, "</p>\n")
 				.replace(/<br>/g, "<br>\n");
 
-			// add new line at end (before tag)
-			if ((tag.isblock && !tag.close) || (topnotext && !popen && tag.name === '!') ||
-				tag.name === 'hr' || tag.name === 'isindex' ||
-				(!tag.close && (tag.isblocksep)) ||
-				(tag.close && (tag.name === 'table' || tag.name === 'ul' ||
-					tag.name === 'ol' || tag.name === 'dl' || tag.name === 'tbody' ||
-					tag.name === 'thead' || tag.namt === 'tfoot'))) {
-				text += "\n";
-			}
+			if (!prelayers) {
+				// add new line at end (before tag)
+				if ((tag.isblock && !tag.close) || (topnotext && !popen && tag.name === '!') ||
+					tag.name === 'hr' || tag.name === 'isindex' ||
+					(!tag.close && (tag.isblocksep)) ||
+					(tag.close && (tag.name === 'table' || tag.name === 'ul' ||
+						tag.name === 'ol' || tag.name === 'dl' || tag.name === 'tbody' ||
+						tag.name === 'thead' || tag.namt === 'tfoot'))) {
+					text += "\n";
+				}
 
-			// add new line at start (after last tag)
-			if ((lasttag.isblock && lasttag.close) || (topnotext && !popen && lasttag.name === '!') ||
-				lasttag.name === 'hr' || lasttag.name === 'isindex' ||
-				(lasttag.close && lasttag.name === 'p') ||
-				lasttag.name === 'br') {
-				text = "\n" + text;
+				// add new line at start (after last tag)
+				if ((lasttag.isblock && lasttag.close) || (topnotext && !popen && lasttag.name === '!') ||
+					lasttag.name === 'hr' || lasttag.name === 'isindex' ||
+					(lasttag.close && lasttag.name === 'p') ||
+					lasttag.name === 'br') {
+					text = "\n" + text;
+				}
 			}
 
 			// no more using topstack after this point
@@ -327,12 +330,18 @@ neon.widget = (function() {
 					stack.push(topstack);
 					topnotext = topstack === 'blockquote' ||
 						topstack === 'center' || topstack === 'form';
+					if (tag.name === 'pre') {
+						prelayers++;
+					}
 				}
 				else if (tag.name === topstack) {
 					stack.pop();
 					topstack = stack[stack.length - 1] || null;
 					topnotext = !topstack || topstack === 'blockquote' ||
 						topstack === 'center' || topstack === 'form';
+					if (tag.name === 'pre') {
+						prelayers--;
+					}
 				}
 
 				// filter script and style
