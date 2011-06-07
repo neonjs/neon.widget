@@ -35,7 +35,7 @@ See http://neonjs.com for documentation and examples of use.
 
 */
 
-/*jslint browser:true,newcap:true,undef:true,type:true */
+/*jslint browser:true,newcap:true,undef:true,type:true,continue:true */
 /*global neon:true,Range,opera */
 
 /**
@@ -349,282 +349,6 @@ neon.widget = (function() {
 		}
 
 		output += text;
-
-		return output.replace(/^\s+|\s+$/g, '');
-	};
-
-	var htmlconvert2 = function(input, strippara, wstopara, acceptclasses) {
-	// helper function for normalising HTML
-	// can strip paragraph tags or generate paragraph tags
-	// from whitespace
-		var
-			i, j,
-			matches, attmatches,
-			tagname, last = '',
-			isblock = false, immedlastblock = false,
-			delta = 0, lastdelta = 0, // delta is +1 for moving into a block, -1 for leaving, 
-				// 0 for non-block
-			elstack = {'span':[],'a':[],'div':[],'form':[],'label':[]},
-			closetag = 0, lastclose, // whether there is/was a slash to indicate close tag
-			keeptext = '', text,	tagcontents,
-			popen = 0, pinitially, // whether a <p> is open
-			output = '',
-			stack = [],
-			topstack,
-			hasinline = false, needslinebreak = false, nextlinebreak = false,
-			attname, attvalue,
-			classlist = acceptclasses || [],
-			classnames, found,
-			parsereg = /([\s\S]*?(?=<[\/\w!])|[\s\S]+)((?:<(\/?)(!|[\w\-]+)((?:[^>'"\-]+|-[^>'"\-]|"[\s\S]*?"|'[\s\S]*?'|--[\s\S]*?--)*)>?)?)/g,
-				// 1: text; 2: tag; 3: slash; 4: tagname; 5: tagcontents; 6: endtext;
-			attribreg = /([^\s=]+)(?:\s*=\s*(?:(["'])([\s\S]*?)\2|(\S*)))?/g,
-				// 1: attname; 2: quotemark; 3: quotecontents; 4: nonquotecontents
-			blockreg = /^(?:h[1-6]|ul|ol|dl|menu|dir|pre|hr|blockquote|address|center|div|isindex|form|fieldset|table|style|(no)?script|section|article|aside|hgroup|header|footer|nav|figure)$/,
-			blockseparator = /^(?:li|tr|div|dd|dt|thead|tbody|tfoot)$/,
-			filtertag = /^(base|html|body|head|title|meta|link|font)$/;
-
-		input += " ";
-
-		for (matches = parsereg.exec(input); matches; matches = parsereg.exec(input)) {
-
-			if (tagname) {
-				lastdelta = delta;
-				last = tagname;
-				lastclose = closetag;
-			}
-			immedlastblock = isblock;
-			needslinebreak = nextlinebreak;
-			nextlinebreak = false;
-			delta = 0;
-			topstack = stack[stack.length-1];
-			popen = pinitially =
-				lastdelta ? 0 :
-				last !== 'p' ? popen :
-				lastclose ? 0 : 1;
-			closetag = matches[3];
-			tagname = matches[4] ? matches[4].toLowerCase() : '';
-			tagcontents = '';
-			text = matches[1];
-			isblock = tagname && blockreg.test(tagname);
-			if (immedlastblock || last === 'p' || last === 'td' || last === 'th' ||
-				blockseparator.test(last)) {
-				for (i in elstack) {
-					if (elstack.hasOwnProperty(i) && !blockreg.test(i)) {
-						elstack[i] = [];
-					}
-				}
-				hasinline = needslinebreak = false;
-			}
-			hasinline = hasinline || 
-				(text && /\S/.test(text)) ||
-				(last && !immedlastblock && last !== '!' && last !== 'p' &&
-				last !== 'td' && last !== 'th' &&
-				!blockseparator(last));
-
-			// filter some elements all the time
-			if (filtertag.test(tagname)) {
-				tagname = '';
-			}
-
-			// filter MS conditional comments
-			if (tagname === '!' && /^(--)?\[(end)?if/i.test(matches[5])) {
-				tagname = '';
-			}
-		
-			// get and filter tag contents (attributes)
-			if (tagname && matches[5].length) {
-				if (tagname === '!') {
-					tagcontents = matches[5];
-				}
-				else {
-					for (attmatches = attribreg.exec(matches[5]); attmatches;
-						attmatches = attribreg.exec(matches[5])) {
-						attname = attmatches[1].toLowerCase();
-						attvalue = attmatches[4] || attmatches[3];
-						// filter class attribute
-						if (attname === 'class') {
-							// allow only classnames specified in the optional argument
-							classnames = attvalue.split(/\s+/);
-							for (i = classnames.length; i--; ) {
-								for (j = classlist.length, found = 0; j-- && !found; ) {
-									if (classnames[i] === classlist[j]) {
-										found = 1;
-									}
-								}
-								if (!found) {
-									classnames.splice(i, 1);
-								}
-							}
-							attvalue = classnames.join(' ');
-							if (attvalue) {
-								tagcontents += " class=\"" + attvalue + "\"";
-							}
-						}
-						else if (attname !== 'id' && attname !== 'for' &&
-							attname !== 'style' && attname !== 'align' &&
-							(attname !== 'name' || tagname !== 'a') &&
-							!/^on/.test(attname)) {
-							// allow only approved other attributes
-							tagcontents += " " + attmatches[0];
-						}
-					}
-				}
-			}
-
-			// strip certain elements when empty
-			if (tagname && elstack.hasOwnProperty(tagname)) {
-				if (!closetag) {
-					elstack[tagname].push(!tagcontents);
-					if (!tagcontents) {
-						tagname = '';
-					}
-				}
-				else if (!elstack[tagname].length || elstack[tagname].pop()) {
-					tagname = '';
-				}
-				if (!tagname && isblock && hasinline) {
-					nextlinebreak = true;
-				}
-			}
-			
-			// strip paragraphs?
-			if (strippara && 
-				(tagname === 'p' || (tagname === 'br' && (topstack ||
-					topstack === 'blockquote' || topstack === 'center' ||
-					topstack === 'form'))) &&
-				!tagcontents) {
-				tagname = '';
-			}
-
-			// calculate block nesting and delta
-			if (tagname && isblock &&
-				tagname !== 'hr' && tagname !== 'isindex') {
-				if (!closetag) {
-					delta = 1;
-					stack.push(tagname);
-				}
-				else if (tagname === topstack) {
-					delta = -1;
-					stack.pop();
-				}
-			}
-
-			// filter script and style but still record their block nesting
-			// so we can filter their contents
-			if (tagname === 'script' || tagname === 'style') {
-				tagname = '';
-			}
-
-			// clean up text and paragraphs
-			if (topstack !== 'pre') {
-				// process paragraphs
-				if (!topstack || topstack === 'blockquote' || topstack === 'center' ||
-					topstack === 'form' || popen) {
-					// add missing <p> at start
-					if (!popen && (
-						(!delta && tagname && tagname !== '!' && tagname !== 'p' &&
-						tagname !== 'hr' && tagname !== 'isindex') ||
-						/\S/.test(text))) {
-						popen = 1;
-						text = text.replace(/^\s*/, '<p>');
-					}
-					if (popen) {
-						// add missing </p> at end
-						if (delta ||
-							(!closetag && tagname === 'p') ||
-							//!tagname ||
-							(wstopara && /\n\r?\n\s*$/.test(text))
-							) {
-							popen = 0;
-							hasinline = needslinebreak = false;
-							text = text.replace(/\s*$/, '</p>');
-						}
-					}
-				}
-				// add br to account for removed div, form, etc
-				if (needslinebreak && (
-					(!delta && tagname && tagname !== '!' && tagname !== 'p' &&
-					tagname !== 'hr' && tagname !== 'isindex') ||
-					/\S/.test(text))) {
-					text = text.replace(/^\s*/, '<br>');
-					needslinebreak = false;
-				}
-			}
-
-			keeptext += text;
-
-			if (tagname || !matches[4]) {
-				text = keeptext;
-				keeptext = '';
-				if (topstack !== 'pre') {
-
-					// add paragraph breaks within based on whitespace
-					if (popen && wstopara) {
-						if (last === 'br') {
-							text = text.replace(/^\s+/, '');
-						}
-						text = text.replace(/\s*\n\r?\n\s*(?=\S)/g, '</p><p>')
-							.replace(/\s*\n\s*/g, '<br>');
-					}
-					// remove leading spaces
-					if (lastdelta || //!last ||
-						(!pinitially && (!topstack || topstack === 'blockquote' ||
-							topstack === 'center' || topstack === 'form')) ||
-						last === 'p' || last === 'br' || blockseparator.test(last)) {
-						text = text.replace(/^\s+/, ''); 
-					}
-					// remove trailing spaces
-					if (delta || //!tagname ||
-						(!popen && (!topstack || topstack === 'blockquote' ||
-							topstack === 'center' || topstack === 'form')) ||
-						tagname === 'p' || tagname === 'br' || blockseparator.test(tagname)) {
-						text = text.replace(/\s+$/, '');
-					}
-					// normalise remaining whitespace
-					text = text.replace(/\s+/g, ' ');
-					// convert < and & where it is not part of tag or entity
-					text = strippara ? 
-						text.replace(/&lt;(?![\/\w!])/g, '<').replace(/&amp;(?![\w#])/g, '&') :
-						text.replace(/<(?![\/\w!])/g, '&lt;').replace(/&(?![\w#])/g, '&amp;');
-
-					// account for added para tags
-					text = strippara ? text.replace(/<\/?\w+>/g, "\n") :
-						text.replace(/<p>/g, "\n<p>").replace(/<\/p>/g, "</p>\n")
-						.replace(/<br>/g, "<br>\n");
-					// add newline at end (before tag)
-					if (
-						delta === 1 || (!popen && tagname === '!') || 
-						tagname === 'hr' || tagname === 'isindex' ||
-						(!closetag && (tagname === 'p' || blockseparator.test(tagname))) || 
-						(closetag && (tagname === 'table' || tagname === 'ul' || tagname === 'ol' || tagname === 'dl'))
-						) {
-						text += "\n";
-					}
-					// add newline at start (after last tag)
-					if (
-						lastdelta === -1 || (!pinitially && last === '!') ||
-						last === 'hr' || last === 'isindex' ||
-						(lastclose && last === 'p') ||
-						last === 'br') {
-						text = "\n" + text;
-					}
-				}
-				
-				if (topstack !== 'style' && topstack !== 'script') {
-					// output the text before the tag
-					output += text;
-
-					// output the tag
-					if (tagname) {
-						output += "<" + (closetag || '') + tagname + tagcontents + ">";
-					}
-				}
-			}
-		}
-		// close last p tag
-		if (popen && !strippara && !delta && (tagname !== 'p' || !closetag)) {
-			 output += '</p>';
-		}
 
 		return output.replace(/^\s+|\s+$/g, '');
 	};
@@ -1132,32 +856,6 @@ neon.widget = (function() {
 				}
 			};
 
-			var makeparagraph = function() {
-			// ensures that text under current cursor is in paragraph tag rather than
-			// bare at top level
-				var
-					obj,
-					rng = savedselection;
-				// IE we don't need to worry
-				// opera I don't think we need to worry
-				// FF4 has <br> directly in the editor
-				// chrome has bare editor at start, or an empty div, or a div containing only br
-				if (rng && rng.startContainer) {
-					obj = rng.startContainer.childNodes.length &&
-						rng.startContainer.childNodes[rng.startOffset] ?
-						rng.startContainer.childNodes[rng.startOffset] : rng.startContainer;
-
-					if ((obj.parentNode === editor[0] && obj.tagName.toLowerCase() === 'br') ||
-						(obj === editor[0] && !editor[0].childNodes.length) ||
-						(obj.parentNode.parentNode === editor[0] &&
-							obj.parentNode.tagName.toLowerCase() === 'div' &&
-							(!obj.parentNode.childNodes.length || (obj.parentNode.childNodes.length === 1 &&
-								obj.tagName.toLowerCase() === 'br')))) {
-						docommand('formatblock', '<p>');
-					}
-				}
-			};
-
 			var findinselection = function(tagname) {
 				var
 					i, len, el,
@@ -1200,24 +898,8 @@ neon.widget = (function() {
 			var updatecontrols = function() {
 				var i;
 				saveselection();
-				makeparagraph();
 				for (i = updators.length; i--;) {
 					updators[i]();
-				}
-			};
-
-			var onpaste = function() {
-				setTimeout(function() {
-					filterinplace(editor, acceptclasses);
-				}, 0);
-			};
-
-			var updateevent = function(evt) {
-				if ((evt.which < 65 && evt.which !== 32) ||
-					evt.which > 122) {
-					setTimeout(function() {
-						updatecontrols();
-					}, 0);
 				}
 			};
 
@@ -1235,6 +917,48 @@ neon.widget = (function() {
 				}
 				if (foc && foc !== editor[0] && foc !== document.activeElement) {
 					foc.focus();
+				}
+			};
+
+			var makeparagraph = function() {
+			// ensures that text under current cursor is in paragraph tag rather than
+			// bare at top level
+				var
+					obj,
+					rng = savedselection;
+				// IE we don't need to worry
+				// opera I don't think we need to worry
+				// FF4 has <br> directly in the editor
+				// chrome has bare editor at start, or an empty div, or a div containing only br
+				if (rng && rng.startContainer) {
+					obj = rng.startContainer.childNodes.length &&
+						rng.startContainer.childNodes[rng.startOffset] ?
+						rng.startContainer.childNodes[rng.startOffset] : rng.startContainer;
+
+					if ((obj.parentNode === editor[0] && obj.tagName.toLowerCase() === 'br') ||
+						(obj === editor[0] && !editor[0].childNodes.length) ||
+						(obj.parentNode.parentNode === editor[0] &&
+							obj.parentNode.tagName.toLowerCase() === 'div' &&
+							(!obj.parentNode.childNodes.length || (obj.parentNode.childNodes.length === 1 &&
+								obj.tagName.toLowerCase() === 'br')))) {
+						docommand('formatblock', '<p>');
+					}
+				}
+			};
+
+			var onpaste = function() {
+				setTimeout(function() {
+					filterinplace(editor, acceptclasses);
+				}, 0);
+			};
+
+			var updateevent = function(evt) {
+				if ((evt.which < 65 && evt.which !== 32) ||
+					evt.which > 122) {
+					setTimeout(function() {
+						makeparagraph();
+						updatecontrols();
+					}, 0);
 				}
 			};
 
