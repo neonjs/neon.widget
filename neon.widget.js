@@ -120,6 +120,12 @@ neon.widget = (function() {
 			tag.isblocksep = !tag.isblock && blockseparator.test(tag.name);
 			tag.hasinline = !tag.isblock && !tag.isblocksep && hasinlinereg.test(tag.name);
 
+			// stop using needslinebreak if...
+			if (needslinebreak &&
+				(lasttag.isblock || lasttag.isblocksep || lasttag.name === 'br')) {
+				needslinebreak = false;
+			}
+
 			// add in replacement break if necessary
 			if (needslinebreak) {
 				if (tag.hasinline || /\S/.test(newtext)) {
@@ -127,9 +133,11 @@ neon.widget = (function() {
 					newtext = newtext.replace(/^\s*/, '<br>');
 					needslinebreak = false;
 				}
+				/*
 				else if (lasttag.isblock || lasttag.isblocksep || lasttag.name === 'br') {
 					needslinebreak = false;
 				}
+				*/
 			}
 
 			// add newtext to cumlative text - we treat it as all one from now
@@ -250,6 +258,10 @@ neon.widget = (function() {
 
 			// ws to para
 			if (popen && wstopara) {
+				if (/\S\s*\n\s*$/.test(text)) {
+					needslinebreak = inlinecontext = false;
+					// cannot use inlinecontext after this point
+				}
 				text = text.replace(/\s*\n\r?\n\s*(?=\S)/g, '</p><p>')
 					.replace(/\s*\n\s*/g, '<br>');
 			}
