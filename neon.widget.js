@@ -102,6 +102,9 @@ neon.widget = (function() {
 
 			matches;
 
+		// workaround for when last tag is skipped
+		input += " ";
+
 		for (matches = parsereg.exec(input); matches;
 			matches = parsereg.exec(input)) {
 
@@ -121,7 +124,7 @@ neon.widget = (function() {
 			tag.hasinline = !tag.isblock && !tag.isblocksep && hasinlinereg.test(tag.name);
 
 			// stop using needslinebreak if...
-			if (needslinebreak &&
+			if (needslinebreak && !/\S/.test(text) &&
 				(lasttag.isblock || lasttag.isblocksep || lasttag.name === 'br')) {
 				needslinebreak = false;
 			}
@@ -133,11 +136,6 @@ neon.widget = (function() {
 					newtext = newtext.replace(/^\s*/, '<br>');
 					needslinebreak = false;
 				}
-				/*
-				else if (lasttag.isblock || lasttag.isblocksep || lasttag.name === 'br') {
-					needslinebreak = false;
-				}
-				*/
 			}
 
 			// add newtext to cumlative text - we treat it as all one from now
@@ -215,16 +213,18 @@ neon.widget = (function() {
 				if (!tag.close) {
 					elstack[tag.name].push(!tag.contents);
 					if (!tag.contents) {
+						if (tag.isblock && inlinecontext) {
+							needslinebreak = true;
+						}
 						tag = null;
+						continue;
 					}
 				}
 				else if (!elstack[tag.name].length || elstack[tag.name].pop()) {
-					tag = null;
-				}
-				if (!tag) {
-					if (inlinecontext) {
+					if (tag.isblock && inlinecontext) {
 						needslinebreak = true;
 					}
+					tag = null;
 					continue;
 				}
 			}
@@ -301,7 +301,8 @@ neon.widget = (function() {
 				tag.name === 'hr' || tag.name === 'isindex' ||
 				(!tag.close && (tag.isblocksep)) ||
 				(tag.close && (tag.name === 'table' || tag.name === 'ul' ||
-					tag.name === 'ol' || tag.name === 'dl'))) {
+					tag.name === 'ol' || tag.name === 'dl' || tag.name === 'tbody' ||
+					tag.name === 'thead' || tag.namt === 'tfoot'))) {
 				text += "\n";
 			}
 
