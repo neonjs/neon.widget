@@ -800,7 +800,7 @@ neon.widget = (function() {
 					if (!editor[0].childNodes.length) {
 						sel.removeAllRanges();
 						rng = document.createRange();
-						rng.selectNodeContents(editor.append({p:null})[0]);
+						rng.selectNodeContents(editor.append({p:{br:null}})[0]);
 						sel.addRange(rng);
 					}
 					if (sel.rangeCount &&
@@ -810,9 +810,9 @@ neon.widget = (function() {
 
 						rng = sel.getRangeAt(0);
 						if ((rng.commonAncestorContainer === editor[0] &&
-							editor[0].childNodes.lengtj) ||
+							editor[0].childNodes.length) ||
 							editor.contains(rng.commonAncestorContainer)) {
-							return rng;
+							return (savedselection = rng);
 						}
 					}
 				}
@@ -823,16 +823,12 @@ neon.widget = (function() {
 						if (rng.parentElement) {
 							par = rng.parentElement();
 							if (par === editor[0] || editor.contains(par)) {
-								return rng;
+								return (savedselection = rng);
 							}
 						}
 					}
 					catch (e) {}
 				}
-			};
-
-			var saveselection = function() {
-				savedselection = getrange() || savedselection;
 			};
 
 			var restoreselection = function() {
@@ -931,7 +927,7 @@ neon.widget = (function() {
 						document.execCommand('useCSS', false, true);
 					} catch (e) {}
 					document.execCommand(command, false, param);
-					saveselection();
+					getrange();
 					updatecontrols();
 				}
 				if (foc && foc !== editor[0] && foc !== document.activeElement) {
@@ -954,11 +950,26 @@ neon.widget = (function() {
 						rng.startContainer.childNodes[rng.startOffset] ?
 						rng.startContainer.childNodes[rng.startOffset] : rng.startContainer;
 
-					if (obj.parentNode === editor[0] &&
+					if ((obj.parentNode === editor[0] &&
 						(obj.nodeType === 3 || obj.tagName.toLowerCase() === 'br' ||
-						obj.tagName.toLowerCase() === 'div')) {
+						obj.tagName.toLowerCase() === 'div')) ||
+						(obj.parentNode && obj.parentNode.parentNode === editor[0] &&
+						obj.parentNode.tagName.toLowerCase() === 'div' &&
+						(obj.nodeType === 3 || obj.tagName.toLowerCase() === 'br'))) {
+						// force FF to redraw its cursor
+						window.getSelection().removeAllRanges();
+						restoreselection();
 						docommand('formatblock', '<p>');
 					}
+				}
+			};
+
+			var onkeypress = function(evt) {
+				if (evt.which === 13) {
+					setTimeout(function() {
+						getrange();
+						makeparagraph();
+					}, 0);
 				}
 			};
 
@@ -969,11 +980,10 @@ neon.widget = (function() {
 			};
 
 			var updateevent = function(evt) {
-				saveselection();
-				makeparagraph();
 				if ((evt.which < 65 && evt.which !== 32) ||
 					evt.which > 122 || evt.ctrlKey) {
 					setTimeout(function() {
+						getrange();
 						updatecontrols();
 					}, 0);
 				}
@@ -1090,7 +1100,7 @@ neon.widget = (function() {
 					htmleditor.style('display', 'none');
 					setTimeout(function() {
 						editor[0].focus();
-						saveselection();
+						getrange();
 					}, 0);
 				};
 
@@ -1118,7 +1128,7 @@ neon.widget = (function() {
 					flyout;
 
 				var onfocus = function() {
-					saveselection();
+					getrange();
 					editlink = neon.select(findinselection('a'));
 					urlinput[0].value = editlink.length ?
 						editlink[0].getAttribute('href') : '';
@@ -1333,7 +1343,7 @@ neon.widget = (function() {
 				};
 
 				var onfocus = function() {
-					saveselection();
+					getrange();
 					editimage = neon.select(findinselection('img'));
 					urlinput[0].value = editimage.length ?
 						editimage[0].getAttribute('src') : '';
@@ -1545,17 +1555,19 @@ neon.widget = (function() {
 				// strangely in IE6 (and 7?) the following capital E is important
 				editor.setAttribute('contentEditable', 'true');
 				editor.watch('keyup', updateevent);
+				editor.watch('keypress', onkeypress);
 				editor.watch('mouseup', updateevent);
 				editor.watch('mouseleave', updateevent);
 				editor.watch('paste', onpaste);
-				toolbar.watch('mousedown', saveselection);
+				toolbar.watch('mousedown', getrange);
 
 				teardowns.push(function() {
 					editor.unwatch('keyup', updateevent)
+						.unwatch('keypress', onkeypress)
 						.unwatch('mouseup', updateevent)
 						.unwatch('mouseleave', updateevent)
 						.unwatch('paste', onpaste);
-					toolbar.unwatch('mousedown', saveselection);
+					toolbar.unwatch('mousedown', getrange);
 				});
 			}
 
@@ -1590,7 +1602,7 @@ neon.widget = (function() {
 			editor[0][canedit ? 'innerHTML' : 'value'] =
 				htmlconvert(source, !canedit, 0);
 
-			saveselection();
+			getrange();
 			updatecontrols();
 
 			return obj;
