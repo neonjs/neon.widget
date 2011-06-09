@@ -990,7 +990,6 @@ neon.widget = (function() {
 				// opera I don't think we need to worry
 				// FF4 has <br> directly in the editor
 				// chrome has bare editor at start, or an empty div, or a div containing only br
-				console.log("Making new paragraph");
 				if (rng && rng.startContainer) {
 					obj = rng.startContainer.childNodes.length &&
 						rng.startContainer.childNodes[rng.startOffset] ?
