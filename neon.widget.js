@@ -989,7 +989,8 @@ neon.widget = (function() {
 				// IE we don't need to worry
 				// opera I don't think we need to worry
 				// FF4 has <br> directly in the editor
-				// chrome has bare editor at start, or an empty div, or a div containing only br
+				// chrome has bare editor at start, or an empty div,
+				// or a div containing only br
 				if (rng && rng.startContainer) {
 					obj = rng.startContainer.childNodes.length &&
 						rng.startContainer.childNodes[rng.startOffset] ?
@@ -1011,7 +1012,7 @@ neon.widget = (function() {
 			};
 
 			var onkeypress = function(evt) {
-				if (evt.which === 13) {
+				if (evt.which === 13 && !evt.shiftKey) {
 					setTimeout(function() {
 						getrange();
 						makeparagraph();
