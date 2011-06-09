@@ -35,7 +35,8 @@ See http://neonjs.com for documentation and examples of use.
 
 */
 
-/*jslint browser:true,newcap:true,undef:true,type:true,continue:true */
+/*jslint browser:true,sloppy:true,vars:true,plusplus:true,regexp:true,
+	type:true,continue:true */
 /*global neon:true,Range,opera */
 
 /**
@@ -361,7 +362,8 @@ neon.widget = (function() {
 					topstack = tag.name;
 					stack.push(topstack);
 					topnotext = topstack === 'blockquote' ||
-						topstack === 'center' || topstack === 'form';
+						topstack === 'center' || topstack === 'form' ||
+						topstack === 'section' || topstack === 'article';
 					if (tag.name === 'pre') {
 						prelayers++;
 					}
@@ -370,7 +372,8 @@ neon.widget = (function() {
 					stack.pop();
 					topstack = stack[stack.length - 1] || null;
 					topnotext = !topstack || topstack === 'blockquote' ||
-						topstack === 'center' || topstack === 'form';
+						topstack === 'center' || topstack === 'form' ||
+						topstack === 'section' || topstack === 'article';
 					if (tag.name === 'pre') {
 						prelayers--;
 					}
@@ -997,7 +1000,8 @@ neon.widget = (function() {
 						rng.startContainer.childNodes[rng.startOffset] : rng.startContainer;
 
 					while (obj !== editor[0] && obj.parentNode !== editor[0] &&
-						!/^(?:div|section|article)$/i.test(obj.parentNode.tagName)) {
+						!/^(?:div|section|article|blockquote|center|form)$/i.test(
+						obj.parentNode.tagName)) {
 						obj = obj.parentNode;
 					}
 
