@@ -1677,7 +1677,7 @@ neon.widget = (function() {
 			'font:12px sans-serif;margin:0 0 1px 0;background:#f9f6f3')
 		// button text needs to be re-set in FF (at least)
 		.styleRule('.neon-widget-richtext-toolbar-selectable',
-			'display:inline-block;padding:5px;cursor:default')
+			'display:inline-block;padding:5px;cursor:default;vertical-align:middle;line-height:110%;min-height:14px')
 		.styleRule('.neon-widget-richtext-toolbar-selectable:hover',
 			'padding:4px;border:1px solid ButtonShadow')
 		.styleRule('.neon-widget-richtext-toolbar-selectable:focus',
@@ -1687,7 +1687,7 @@ neon.widget = (function() {
 		.styleRule('.neon-widget-richtext-toolbar-styleelement',
 			'margin:0;padding:0;white-space:nowrap')
 		.styleRule('.neon-widget-richtext-toolbar-separator',
-			'display:inline-block;width:5px')
+			'display:inline-block;width:0;height:12px;margin:5px;border-left:1px solid #dfdcd9;vertical-align:middle;line-height:0')
 		.styleRule('.neon-widget-richtext-editor',
 			'max-height:27em')
 		.styleRule('.neon-widget-richtext-editor:focus',
@@ -1723,7 +1723,7 @@ neon.widget = (function() {
 		.styleRule('.neon-widget-richtext-dialog-buttonrow',
 			'white-space:nowrap;text-align:right;margin-top:9px')
 		.styleRule('.neon-widget-richtext-toolbar-icon',
-			'display:inline-block;vertical-align:middle')
+			'display:inline-block;vertical-align:middle;line-height:100%')
 		.styleRule('.neon-widget-richtext-toolbar-sideicon',
 			'margin-left:4px')
 		.styleRule('.neon-widget-richtext-toolbar-label',
