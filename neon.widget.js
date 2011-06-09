@@ -1654,7 +1654,9 @@ neon.widget = (function() {
 			editor[0][canedit ? 'innerHTML' : 'value'] =
 				htmlconvert(source, !canedit, 0);
 
-			getrange();
+			if (canedit) {
+				getrange();
+			}
 			updatecontrols();
 
 			return obj;
