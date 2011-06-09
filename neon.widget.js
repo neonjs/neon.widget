@@ -85,7 +85,7 @@ neon.widget = (function() {
 			// they might have optional tags
 			elstack = {'span':[],'a':[],'div':[],'form':[],'label':[]},
 
-			lasttag, tag = {},
+			lasttag = {}, tag = null,
 			att = {},
 			stack = [], topstack = null, topnotext = true,
 			popen = false,
@@ -125,23 +125,28 @@ neon.widget = (function() {
 			tag.hasinline = !tag.isblock && !tag.isblocksep && hasinlinereg.test(tag.name);
 
 			// stop using needslinebreak if...
-			if (needslinebreak && !/\S/.test(text) &&
+			if (needslinebreak && !(prelayers ? text : /\S/.test(text)) &&
 				(lasttag.isblock || lasttag.isblocksep || lasttag.name === 'br')) {
 				needslinebreak = false;
 			}
 
 			// add in replacement break if necessary
 			if (needslinebreak) {
-				if (tag.hasinline || /\S/.test(newtext)) {
-					text = text.replace(/\s+$/, '');
-					newtext = newtext.replace(/^\s*/, '<br>');
+				if (tag.hasinline || (prelayers ? text : /\S/.test(newtext))) {
+					if (!prelayers) {
+						text = text.replace(/\s+$/, '');
+						newtext = newtext.replace(/^\s*/, '<br>');
+					}
+					else {
+						newtext = '<br>' + newtext;
+					}
 					needslinebreak = false;
 				}
 			}
 
 			// add newtext to cumlative text - we treat it as all one from now
 			text += newtext;
-			textfull = /\S/.test(text);
+			textfull = prelayers ? text : /\S/.test(text);
 			
 			// work out if we have inline context up to this point
 			inlinecontext = textfull || lasttag.hasinline ? true :
@@ -230,7 +235,8 @@ neon.widget = (function() {
 				}
 			}
 
-			// from this point, no turning back
+			// from this point, all accumulated text is treated as one block
+			// no breaking out from this point
 
 			// strip paragraphs?
 			if (strippara &&
@@ -259,29 +265,29 @@ neon.widget = (function() {
 				}
 			}
 
-			// ws to para
-			if (popen && wstopara) {
-				if (/\S\s*\n\s*$/.test(text)) {
-					needslinebreak = inlinecontext = false;
-					// cannot use inlinecontext after this point
-				}
-				text = text.replace(/\s*\n\r?\n\s*(?=\S)/g, '</p><p>')
-					.replace(/\s*\n\s*/g, '<br>');
-			}
-
 			if (!prelayers) {
+
+				// ws to para
+				if (popen && wstopara) {
+					if (/\S\s*\n\s*$/.test(text)) {
+						needslinebreak = inlinecontext = false;
+						// cannot use inlinecontext after this point
+					}
+					text = text.replace(/\s*\n\r?\n\s*(?=\S)/g, '</p><p>')
+						.replace(/\s*\n\s*/g, '<br>');
+				}
 
 				// remove leading spaces
 				if (lasttag.isblock ||
 					(!popen && topnotext) ||
-					lasttag.isblocksep || lasttag.name === 'br') {
+					lasttag.isblocksep || lasttag.name === 'br' || !lasttag.name) {
 					text = text.replace(/^\s+/, '');
 				}
 
 				// remove trailing spaces
 				if (tag.isblock ||
 					(!popen && topnotext) ||
-					tag.isblocksep || tag.name === 'br') {
+					tag.isblocksep || tag.name === 'br' || tag.name === 'neon-widget-end') {
 					text = text.replace(/\s+$/, '');
 				}
 
@@ -295,9 +301,13 @@ neon.widget = (function() {
 				text.replace(/<(?![\/\w!])/g, '&lt;').replace(/&(?![\w#])/g, '&amp;');
 
 			// account for added para tags
-			text = strippara ? text.replace(/<\/?\w+>/g, "\n") :
-				text.replace(/<p>/g, "\n<p>").replace(/<\/p>/g, "</p>\n")
-				.replace(/<br>/g, "<br>\n");
+			if (strippara) {
+				text = text.replace(/<\/?\w+>/g, "\n");
+			}
+			else if (!prelayers) {
+				text = text.replace(/<p>/g, "\n<p>").replace(/<\/p>/g, "</p>\n")
+					.replace(/<br>/g, "<br>\n");
+			}
 
 			if (!prelayers) {
 				// add new line at end (before tag)
