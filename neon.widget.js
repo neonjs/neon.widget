@@ -85,7 +85,7 @@ neon.widget = (function() {
 			// they might have optional tags
 			elstack = {'span':[],'a':[],'div':[],'form':[],'label':[]},
 
-			lasttag, tag = {},
+			lasttag = {}, tag = null,
 			att = {},
 			stack = [], topstack = null, topnotext = true,
 			popen = false,
@@ -125,23 +125,28 @@ neon.widget = (function() {
 			tag.hasinline = !tag.isblock && !tag.isblocksep && hasinlinereg.test(tag.name);
 
 			// stop using needslinebreak if...
-			if (needslinebreak && !/\S/.test(text) &&
+			if (needslinebreak && !(prelayers ? text : /\S/.test(text)) &&
 				(lasttag.isblock || lasttag.isblocksep || lasttag.name === 'br')) {
 				needslinebreak = false;
 			}
 
 			// add in replacement break if necessary
 			if (needslinebreak) {
-				if (tag.hasinline || /\S/.test(newtext)) {
-					text = text.replace(/\s+$/, '');
-					newtext = newtext.replace(/^\s*/, '<br>');
+				if (tag.hasinline || (prelayers ? text : /\S/.test(newtext))) {
+					if (!prelayers) {
+						text = text.replace(/\s+$/, '');
+						newtext = newtext.replace(/^\s*/, '<br>');
+					}
+					else {
+						newtext = '<br>' + newtext;
+					}
 					needslinebreak = false;
 				}
 			}
 
 			// add newtext to cumlative text - we treat it as all one from now
 			text += newtext;
-			textfull = /\S/.test(text);
+			textfull = prelayers ? text : /\S/.test(text);
 			
 			// work out if we have inline context up to this point
 			inlinecontext = textfull || lasttag.hasinline ? true :
@@ -200,6 +205,7 @@ neon.widget = (function() {
 					}
 					else if (att.name !== 'id' && att.name !== 'for' &&
 						att.name !== 'style' && att.name !== 'align' &&
+						att.name !== 'contenteditable' &&
 						(att.name !== 'name' || tag.name !== 'a') &&
 						!/^on/.test(att.name)) {
 						// allow only approved other attributes
@@ -229,8 +235,21 @@ neon.widget = (function() {
 					continue;
 				}
 			}
+			
+			/*
+			// strip br tags, replacing them only if followed by inline content
+			// this removes the <br> from the end of paragraphs/blocks
+			if (tag.name === 'br' &&
+				(lasttag.isblock ? false : lasttag.name !== 'p' ? popen :
+				lasttag.close ? false : true)) {
+				needslinebreak = true;
+				tag = null;
+				continue;
+			}
+			*/
 
-			// from this point, no turning back
+			// from this point, all accumulated text is treated as one block
+			// no breaking out from this point
 
 			// strip paragraphs?
 			if (strippara &&
@@ -240,10 +259,11 @@ neon.widget = (function() {
 				tag.strip = true;
 			}
 
+			// calculate popen
 			popen = lasttag.isblock ? false :
 				lasttag.name !== 'p' ? popen :
 				lasttag.close ? false : true;
-			
+
 			// add implied paragraph tags
 			if (popen || topnotext) {
 
@@ -259,31 +279,39 @@ neon.widget = (function() {
 				}
 			}
 
-			// ws to para
-			if (popen && wstopara) {
-				if (/\S\s*\n\s*$/.test(text)) {
-					needslinebreak = inlinecontext = false;
-					// cannot use inlinecontext after this point
-				}
-				text = text.replace(/\s*\n\r?\n\s*(?=\S)/g, '</p><p>')
-					.replace(/\s*\n\s*/g, '<br>');
-			}
-
 			if (!prelayers) {
+
+				// ws to para
+				if (popen && wstopara) {
+					if (/\S\s*\n\s*$/.test(text)) {
+						needslinebreak = inlinecontext = false;
+						// cannot use inlinecontext after this point
+					}
+					text = text.replace(/\s*\n\r?\n\s*(?=\S)/g, '</p><p>')
+						.replace(/\s*\n\s*/g, '<br>');
+				}
 
 				// remove leading spaces
 				if (lasttag.isblock ||
 					(!popen && topnotext) ||
-					lasttag.isblocksep || lasttag.name === 'br') {
+					lasttag.isblocksep || lasttag.name === 'br' || !lasttag.name) {
 					text = text.replace(/^\s+/, '');
 				}
 
 				// remove trailing spaces
 				if (tag.isblock ||
 					(!popen && topnotext) ||
-					tag.isblocksep || tag.name === 'br') {
+					tag.isblocksep || tag.name === 'br' || tag.name === 'neon-widget-end') {
 					text = text.replace(/\s+$/, '');
 				}
+
+				/*
+				// remove preceding <br>
+				if (tag.isblock || tag.isblocksep || (popen && !tag.close && tag.name === 'p')) {
+					// hack - remove previous <br>
+					output = output.replace(/<br>$/, '');
+				}
+				*/
 
 				// normalise remaining whitespace
 				text = text.replace(/\s+/g, ' ');
@@ -295,9 +323,13 @@ neon.widget = (function() {
 				text.replace(/<(?![\/\w!])/g, '&lt;').replace(/&(?![\w#])/g, '&amp;');
 
 			// account for added para tags
-			text = strippara ? text.replace(/<\/?\w+>/g, "\n") :
-				text.replace(/<p>/g, "\n<p>").replace(/<\/p>/g, "</p>\n")
-				.replace(/<br>/g, "<br>\n");
+			if (strippara) {
+				text = text.replace(/<\/?\w+>/g, "\n");
+			}
+			else if (!prelayers) {
+				text = text.replace(/<p>/g, "\n<p>").replace(/<\/p>/g, "</p>\n")
+					.replace(/<br>/g, "<br>\n");
+			}
 
 			if (!prelayers) {
 				// add new line at end (before tag)
@@ -376,7 +408,8 @@ neon.widget = (function() {
 			element = neon.select(els[i]);
 
 			element.removeAttribute('style').removeAttribute('id')
-				.removeAttribute('for').removeAttribute('align');
+				.removeAttribute('for').removeAttribute('align')
+				.removeAttribute('contentEditable');
 
 			if (element[0].tagName === 'a') {
 				element.removeAttribute('name');
@@ -795,20 +828,24 @@ neon.widget = (function() {
 					sel, rng, par;
 				if (window.getSelection) {
 					sel = window.getSelection();
+
 					// if empty editor, full it with a <p></p> and select.
-					// this avoids bug with firefox #550434?
+					// this helps start new documents off with a proper paragraph at start
+					// esp in chrome
 					if (!editor[0].childNodes.length) {
 						sel.removeAllRanges();
 						rng = document.createRange();
 						rng.selectNodeContents(editor.append({p:{br:null}})[0]);
 						sel.addRange(rng);
 					}
+
 					if (sel.rangeCount &&
 						// only use collapsed selection when focused (opera workaround)
 						(!sel.isCollapsed || editor[0] === document.activeElement ||
 						editor.contains(document.activeElement))) {
 
 						rng = sel.getRangeAt(0);
+
 						if ((rng.commonAncestorContainer === editor[0] &&
 							editor[0].childNodes.length) ||
 							editor.contains(rng.commonAncestorContainer)) {
@@ -920,13 +957,21 @@ neon.widget = (function() {
 
 			var docommand = function(command, param) {
 				var
+					dummy,
 					foc = document.activeElement;
 				restoreselection();
-				if (savedselection) {
+				if (getrange()) {
 					try {
 						document.execCommand('useCSS', false, true);
 					} catch (e) {}
-					document.execCommand(command, false, param);
+					// we add a dummy element inside the editor then remove it so that we never operate
+					// with the entire contents selected.  This avoids a number of
+					// Firefox bugs
+					dummy = editor.append({div:null});
+					try {
+						document.execCommand(command, false, param);
+					} catch (f) {}
+					dummy.remove();
 					getrange();
 					updatecontrols();
 				}
@@ -950,13 +995,14 @@ neon.widget = (function() {
 						rng.startContainer.childNodes[rng.startOffset] ?
 						rng.startContainer.childNodes[rng.startOffset] : rng.startContainer;
 
-					if ((obj.parentNode === editor[0] &&
-						(obj.nodeType === 3 || obj.tagName.toLowerCase() === 'br' ||
-						obj.tagName.toLowerCase() === 'div')) ||
-						(obj.parentNode && obj.parentNode.parentNode === editor[0] &&
-						obj.parentNode.tagName.toLowerCase() === 'div' &&
-						(obj.nodeType === 3 || obj.tagName.toLowerCase() === 'br'))) {
-						// force FF to redraw its cursor
+					while (obj !== editor[0] && obj.parentNode !== editor[0] &&
+						!/^(?:div|section|article)$/i.test(obj.parentNode.tagName)) {
+						obj = obj.parentNode;
+					}
+
+					if (obj === editor[0] ||
+						obj.nodeType === 3 || obj.tagName.toLowerCase() === 'br') {
+						// Avoid firefox visual glitch when carat moves due to this command
 						window.getSelection().removeAllRanges();
 						restoreselection();
 						docommand('formatblock', '<p>');
@@ -1095,6 +1141,7 @@ neon.widget = (function() {
 					toolbar.style('display', 'block');
 					editor.style('display', 'block');
 					editor[0].innerHTML = htmlconvert(htmleditor[0].value);
+					filterinplace(editor, acceptclasses);
 					htmlmode = false;
 					htmltoolbar.style('display', 'none');
 					htmleditor.style('display', 'none');
@@ -1646,8 +1693,6 @@ neon.widget = (function() {
 			'outline:none')
 		.styleRule('.neon-widget-richtext-editor :first-child',
 			'margin-top:0')
-		.styleRule('.neon-widget-richtext-editor :last-child',
-			'margin-bottom:0')
 		.styleRule('.neon-widget-richtext-editor td, .neon-widget-richtext-editor th'+
 			'.neon-widget-richtext-editor div, .neon-widget-richtext-editor table, '+
 			'.neon-widget-richtext-editor img, .neon-widget-richtext-editor object',
