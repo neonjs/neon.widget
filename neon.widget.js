@@ -828,14 +828,6 @@ neon.widget = (function() {
 					sel, rng, par;
 				if (window.getSelection) {
 					sel = window.getSelection();
-					// if empty editor, full it with a <p></p> and select.
-					// this avoids bug with firefox #550434?
-					if (!editor[0].childNodes.length) {
-						sel.removeAllRanges();
-						rng = document.createRange();
-						rng.selectNodeContents(editor.append({p:{br:null}})[0]);
-						sel.addRange(rng);
-					}
 					if (sel.rangeCount &&
 						// only use collapsed selection when focused (opera workaround)
 						(!sel.isCollapsed || editor[0] === document.activeElement ||
@@ -953,13 +945,21 @@ neon.widget = (function() {
 
 			var docommand = function(command, param) {
 				var
+					dummy,
 					foc = document.activeElement;
 				restoreselection();
-				if (savedselection) {
+				if (getrange()) {
 					try {
 						document.execCommand('useCSS', false, true);
 					} catch (e) {}
-					document.execCommand(command, false, param);
+					// we add a dummy element inside the editor then remove it so that we never operate
+					// with the entire contents selected.  This avoids a number of
+					// Firefox bugs
+					dummy = editor.append({div:null});
+					try {
+						document.execCommand(command, false, param);
+					} catch (e) {}
+					dummy.remove();
 					getrange();
 					updatecontrols();
 				}
@@ -983,10 +983,12 @@ neon.widget = (function() {
 						rng.startContainer.childNodes[rng.startOffset] ?
 						rng.startContainer.childNodes[rng.startOffset] : rng.startContainer;
 
-					if ((obj.parentNode === editor[0] &&
+					if (((obj.parentNode === editor[0] ||
+						obj.parentNode.tagName.toLowerCase() === 'div') &&
 						(obj.nodeType === 3 || obj.tagName.toLowerCase() === 'br' ||
 						obj.tagName.toLowerCase() === 'div')) ||
-						(obj.parentNode && obj.parentNode.parentNode === editor[0] &&
+						(obj.parentNode && (obj.parentNode.parentNode === editor[0] ||
+						obj.parentNode.parentNode.tagName.toLowerCase() === 'div') &&
 						obj.parentNode.tagName.toLowerCase() === 'div' &&
 						(obj.nodeType === 3 || obj.tagName.toLowerCase() === 'br'))) {
 						// force FF to redraw its cursor
@@ -1679,8 +1681,6 @@ neon.widget = (function() {
 			'outline:none')
 		.styleRule('.neon-widget-richtext-editor :first-child',
 			'margin-top:0')
-		.styleRule('.neon-widget-richtext-editor :last-child',
-			'margin-bottom:0')
 		.styleRule('.neon-widget-richtext-editor td, .neon-widget-richtext-editor th'+
 			'.neon-widget-richtext-editor div, .neon-widget-richtext-editor table, '+
 			'.neon-widget-richtext-editor img, .neon-widget-richtext-editor object',
