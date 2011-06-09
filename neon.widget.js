@@ -828,12 +828,24 @@ neon.widget = (function() {
 					sel, rng, par;
 				if (window.getSelection) {
 					sel = window.getSelection();
+
+					// if empty editor, full it with a <p></p> and select.
+					// this helps start new documents off with a proper paragraph at start
+					// esp in chrome
+					if (!editor[0].childNodes.length) {
+						sel.removeAllRanges();
+						rng = document.createRange();
+						rng.selectNodeContents(editor.append({p:{br:null}})[0]);
+						sel.addRange(rng);
+					}
+
 					if (sel.rangeCount &&
 						// only use collapsed selection when focused (opera workaround)
 						(!sel.isCollapsed || editor[0] === document.activeElement ||
 						editor.contains(document.activeElement))) {
 
 						rng = sel.getRangeAt(0);
+
 						if ((rng.commonAncestorContainer === editor[0] &&
 							editor[0].childNodes.length) ||
 							editor.contains(rng.commonAncestorContainer)) {
@@ -978,20 +990,20 @@ neon.widget = (function() {
 				// opera I don't think we need to worry
 				// FF4 has <br> directly in the editor
 				// chrome has bare editor at start, or an empty div, or a div containing only br
+				console.log("Making new paragraph");
 				if (rng && rng.startContainer) {
 					obj = rng.startContainer.childNodes.length &&
 						rng.startContainer.childNodes[rng.startOffset] ?
 						rng.startContainer.childNodes[rng.startOffset] : rng.startContainer;
 
-					if (((obj.parentNode === editor[0] ||
-						obj.parentNode.tagName.toLowerCase() === 'div') &&
-						(obj.nodeType === 3 || obj.tagName.toLowerCase() === 'br' ||
-						obj.tagName.toLowerCase() === 'div')) ||
-						(obj.parentNode && (obj.parentNode.parentNode === editor[0] ||
-						obj.parentNode.parentNode.tagName.toLowerCase() === 'div') &&
-						obj.parentNode.tagName.toLowerCase() === 'div' &&
-						(obj.nodeType === 3 || obj.tagName.toLowerCase() === 'br'))) {
-						// force FF to redraw its cursor
+					while (obj !== editor[0] && obj.parentNode !== editor[0] &&
+						obj.parentNode.tagName.toLowerCase() !== 'div') {
+						obj = obj.parentNode;
+					}
+
+					if (obj === editor[0] ||
+						obj.nodeType === 3 || obj.tagName.toLowerCase() === 'br') {
+						// Avoid firefox visual glitch when carat moves due to this command
 						window.getSelection().removeAllRanges();
 						restoreselection();
 						docommand('formatblock', '<p>');
@@ -1130,6 +1142,7 @@ neon.widget = (function() {
 					toolbar.style('display', 'block');
 					editor.style('display', 'block');
 					editor[0].innerHTML = htmlconvert(htmleditor[0].value);
+					filterinplace(editor, acceptclasses);
 					htmlmode = false;
 					htmltoolbar.style('display', 'none');
 					htmleditor.style('display', 'none');
