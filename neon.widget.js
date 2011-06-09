@@ -996,7 +996,7 @@ neon.widget = (function() {
 						rng.startContainer.childNodes[rng.startOffset] : rng.startContainer;
 
 					while (obj !== editor[0] && obj.parentNode !== editor[0] &&
-						!/^(?:div|section|article)/.test(obj.parentNode.tagName)) {
+						!/^(?:div|section|article)$/i.test(obj.parentNode.tagName)) {
 						obj = obj.parentNode;
 					}
 
