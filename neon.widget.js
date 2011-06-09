@@ -205,6 +205,7 @@ neon.widget = (function() {
 					}
 					else if (att.name !== 'id' && att.name !== 'for' &&
 						att.name !== 'style' && att.name !== 'align' &&
+						att.name !== 'contenteditable' &&
 						(att.name !== 'name' || tag.name !== 'a') &&
 						!/^on/.test(att.name)) {
 						// allow only approved other attributes
@@ -234,6 +235,18 @@ neon.widget = (function() {
 					continue;
 				}
 			}
+			
+			/*
+			// strip br tags, replacing them only if followed by inline content
+			// this removes the <br> from the end of paragraphs/blocks
+			if (tag.name === 'br' &&
+				(lasttag.isblock ? false : lasttag.name !== 'p' ? popen :
+				lasttag.close ? false : true)) {
+				needslinebreak = true;
+				tag = null;
+				continue;
+			}
+			*/
 
 			// from this point, all accumulated text is treated as one block
 			// no breaking out from this point
@@ -246,10 +259,11 @@ neon.widget = (function() {
 				tag.strip = true;
 			}
 
+			// calculate popen
 			popen = lasttag.isblock ? false :
 				lasttag.name !== 'p' ? popen :
 				lasttag.close ? false : true;
-			
+
 			// add implied paragraph tags
 			if (popen || topnotext) {
 
@@ -290,6 +304,14 @@ neon.widget = (function() {
 					tag.isblocksep || tag.name === 'br' || tag.name === 'neon-widget-end') {
 					text = text.replace(/\s+$/, '');
 				}
+
+				/*
+				// remove preceding <br>
+				if (tag.isblock || tag.isblocksep || (popen && !tag.close && tag.name === 'p')) {
+					// hack - remove previous <br>
+					output = output.replace(/<br>$/, '');
+				}
+				*/
 
 				// normalise remaining whitespace
 				text = text.replace(/\s+/g, ' ');
@@ -386,7 +408,8 @@ neon.widget = (function() {
 			element = neon.select(els[i]);
 
 			element.removeAttribute('style').removeAttribute('id')
-				.removeAttribute('for').removeAttribute('align');
+				.removeAttribute('for').removeAttribute('align')
+				.removeAttribute('contentEditable');
 
 			if (element[0].tagName === 'a') {
 				element.removeAttribute('name');
