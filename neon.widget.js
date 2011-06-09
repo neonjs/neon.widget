@@ -970,7 +970,7 @@ neon.widget = (function() {
 					dummy = editor.append({div:null});
 					try {
 						document.execCommand(command, false, param);
-					} catch (e) {}
+					} catch (f) {}
 					dummy.remove();
 					getrange();
 					updatecontrols();
@@ -996,7 +996,7 @@ neon.widget = (function() {
 						rng.startContainer.childNodes[rng.startOffset] : rng.startContainer;
 
 					while (obj !== editor[0] && obj.parentNode !== editor[0] &&
-						obj.parentNode.tagName.toLowerCase() !== 'div') {
+						!/^(?:div|section|article)/.test(obj.parentNode.tagName)) {
 						obj = obj.parentNode;
 					}
 
