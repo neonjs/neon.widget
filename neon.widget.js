@@ -48,7 +48,7 @@ http://neonjs.com/license
 neon.widget = (function() {
 	
 	var
-		canedit = document.body.contentEditable !== undefined,
+		canedit,
 		gid = 0,
 		widgets = {};
 	
@@ -1682,6 +1682,14 @@ neon.widget = (function() {
 			'margin-left:4px')
 		.styleRule('.neon-widget-richtext-toolbar-label',
 			'vertical-align:middle');
+
+	// detect if the browser allows contenteditable properly
+	// can't use isContentEditable since many firefoxes that support
+	// contenteditable don't support this property
+	canedit = document.body.contentEditable !== undefined &&
+		(!/\b(Apple)?WebKit\/(53[0-4]|5[0-2]|[0-4])/.test(navigator.userAgent) ||
+			(!/\bMobile\//.test(navigator.userAgent) &&
+			!/\bMobile Safari\//.test(navigator.userAgent)));
 
 	return function(func, opts) {
 		if (widgets.hasOwnProperty(func)) {
