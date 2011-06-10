@@ -1040,8 +1040,10 @@ neon.widget = (function() {
 			};
 
 			var updateevent = function(evt) {
-				if ((evt.which < 65 && evt.which !== 32) ||
+				if ((evt.which < 65 && evt.which !== 32 &&
+					(evt.which < 16 || evt.which > 20)) ||
 					evt.which > 122 || evt.ctrlKey) {
+					console.log("Update event", evt.which, evt);
 					setTimeout(function() {
 						getrange();
 						updatecontrols();
