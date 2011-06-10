@@ -410,7 +410,7 @@ neon.widget = (function() {
 		for (i = els.length; i--;) {
 			element = els[i];
 
-			if (element.style.cssText) {
+			if (element.style && element.style.cssText) {
 				element.style.cssText = "";
 				element.removeAttribute("style");
 			}
@@ -442,7 +442,7 @@ neon.widget = (function() {
 				}
 			}
 
-			for (j = element.attributes.length; j--;) {
+			for (j = element.attributes && element.attributes.length; j--;) {
 				if (/^on/i.test(element.attributes[j].name)) {
 					element.removeAttribute(element.attributes[j].name);
 				}
