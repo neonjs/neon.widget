@@ -934,7 +934,7 @@ neon.widget = (function() {
 					selparent;
 				if (rng) {
 					selparent = rng.commonAncestorContainer || rng.parentElement();
-					for (el = selparent; el !== editor[0]; el = el.parentNode) {
+					for (el = selparent; el && el !== editor[0]; el = el.parentNode) {
 						if (el.tagName && el.tagName.toLowerCase() === tagname) {
 							return el;
 						}
