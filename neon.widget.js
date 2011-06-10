@@ -1157,7 +1157,6 @@ neon.widget = (function() {
 					toolbar.style('display', 'block');
 					editor.style('display', 'block');
 					editor[0].innerHTML = htmlconvert(htmleditor[0].value);
-					filterinplace(editor, acceptclasses);
 					htmlmode = false;
 					htmltoolbar.style('display', 'none');
 					htmleditor.style('display', 'none');
