@@ -405,30 +405,24 @@ neon.widget = (function() {
 			classnames, found,
 			classlist = acceptclasses || [],
 			els = editor[0].getElementsByTagName('*'),
-			dummy = editor.insert({div:null}),
 			element;
-
-		// temporarily remove editor from DOM to improve speed
-		editor.remove();
 
 		for (i = els.length; i--;) {
 			element = els[i];
 
 			if (element.style.cssText) {
-				element.style.cssText = null;
+				element.style.cssText = "";
+				element.removeAttribute("style");
 			}
-			element.removeAttribute("id");
-			if (element.htmlFor !== undefined) {
-				element.htmlFor = null;
-			}
-			element.removeAttribute("align");
-			element.removeAttribute("contentEditable");
-
 			if (element.tagName === "a") {
 				element.removeAttribute('name');
 			}
+			element.removeAttribute("for");
+			element.removeAttribute("id");
+			element.removeAttribute("align");
+			element.removeAttribute("contentEditable");
 
-			if (element.className && /\S/.test(element.className)) {
+			if (element.className) {
 				classnames = element.className.split(/\s+/);
 				for (j = classnames.length; j--;) {
 					for (k = classlist.length, found = 0; k-- && !found;) {
@@ -440,7 +434,12 @@ neon.widget = (function() {
 						classnames.splice(j, 1);
 					}
 				}
-				element.className = classnames.join(' ') || null;
+				if (!classnames.length) {
+					element.removeAttribute("class");
+				}
+				else {
+					element.className = classnames.join(' ');
+				}
 			}
 
 			for (j = element.attributes.length; j--;) {
@@ -449,10 +448,6 @@ neon.widget = (function() {
 				}
 			}
 		}
-
-		// replace editor in DOM
-		dummy.insert(editor);
-		dummy.remove();
 	};
 
 	var extendobject = function(obj, extension) {
