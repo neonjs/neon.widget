@@ -638,7 +638,7 @@ neon.widget = (function() {
 	};
 
 	neon.styleRule('.neon-widget-flyout',
-		'position:absolute;z-index:999;border:1px solid ButtonShadow;padding:1px;background:#fff;min-width:14px;box-shadow:0 4px 10px rgba(0,0,0,0.16)')
+		'position:absolute;z-index:999;border:1px solid #84a1b4;padding:1px;background:#fff;min-width:14px;box-shadow:0 4px 10px rgba(0,0,0,0.16)')
 		.styleRule('.neon-widget-flyout-hidden',
 			'display:none')
 		// some ugly-ish hacks for ie6/ie7.  the broken background-image makes transparent areas part of the focus:
@@ -1493,8 +1493,7 @@ neon.widget = (function() {
 					chooser = toolbar.append({span:'',$title:'Paragraph style'})
 						.setAttribute('tabindex', '0')
 						.addClass('neon-widget-richtext-toolbar-selectable'),
-					text = chooser.append({span:"Paragraph style"})
-						.addClass('neon-widget-richtext-toolbar-label'),
+					text = chooser.append({span:"Paragraph style"}),
 					selections = neon.build({div:""})
 						.addClass('neon-widget-richtext-toolbar-stylechooser'),
 					menu;
@@ -1687,24 +1686,24 @@ neon.widget = (function() {
 	};
 
 	neon.styleRule('.neon-widget-richtext',
-		'border:1px solid ButtonShadow;width:auto;padding:1px')
+		'border:1px solid #84a1b4;width:auto;padding:1px')
 		.styleRule('.neon-widget-richtext-toolbar',
-			'font:12px sans-serif;margin:0 0 1px 0;background:#f9f6f3;color:#000')
+			'margin:0 0 1px 0;background:#f9f6f3;color:#000')
 		// button text needs to be re-set in FF (at least)
 		.styleRule('.neon-widget-richtext-toolbar-selectable',
-			'display:inline-block;padding:5px;cursor:default;vertical-align:middle;line-height:110%;min-height:14px')
+			'display:inline-block;padding:5px;cursor:default;vertical-align:middle;line-height:110%;min-height:14px;font:12px sans-serif')
 		.styleRule('.neon-widget-richtext-toolbar-selectable:hover',
-			'padding:4px;border:1px solid ButtonShadow')
+			'padding:4px;border:1px solid #84a1b4')
 		.styleRule('.neon-widget-richtext-toolbar-selectable:focus',
-			'outline:1px dotted ButtonShadow')
+			'outline:1px dotted #84a1b4')
 		.styleRule('.neon-widget-richtext-active',
-			'padding:4px;border:1px solid ButtonShadow;background:#e0e4e6')
+			'padding:4px;border:1px solid #84a1b4;background:#e0e4e6')
 		.styleRule('.neon-widget-richtext-toolbar-styleelement',
 			'margin:0;padding:0;white-space:nowrap')
 		.styleRule('.neon-widget-richtext-toolbar-separator',
 			'display:inline-block;width:0;height:12px;margin:5px;border-left:1px solid #dfdcd9;vertical-align:middle;line-height:0')
 		.styleRule('.neon-widget-richtext-editor',
-			'max-height:27em;background:transparent;color:inherit;font:inherit;background:rgba(255,255,255,0.1)')
+			'max-height:28em;background:transparent;color:inherit;font:inherit;background:rgba(255,255,255,0.1)')
 		.styleRule('.neon-widget-richtext-editor:focus',
 			'outline:none')
 		.styleRule('.neon-widget-richtext-editor :first-child',
@@ -1712,7 +1711,7 @@ neon.widget = (function() {
 		.styleRule('.neon-widget-richtext-editor td, .neon-widget-richtext-editor th'+
 			'.neon-widget-richtext-editor div, .neon-widget-richtext-editor table, '+
 			'.neon-widget-richtext-editor img, .neon-widget-richtext-editor object',
-			'min-height:1em;min-width:1em;outline:1px dotted ButtonShadow')
+			'min-height:1em;min-width:1em;outline:1px dotted #84a1b4')
 		// "height" in a table cell block is a bit like a minimum height
 		.styleRule('.neon-widget-richtext-editor td, .neon-widget-richtext-editor th',
 			'height: 1.25em')
@@ -1725,11 +1724,11 @@ neon.widget = (function() {
 		.styleRule('textarea.neon-widget-richtext-editor',
 			'width:100%;border:0;padding:0;margin:0;min-height:14em')
 		.styleRule('.neon-widget-richtext-toolbar-altnotice',
-			'padding:5px;text-align:right')
+			'padding:5px;text-align:right;font:italic 12px sans-serif')
 		.styleRule('.neon-widget-richtext-dialog',
-			'background:#f9f6f3;padding:5px;margin:0')
+			'background:#f9f6f3;padding:5px;margin:0;font:12px sans-serif')
 		.styleRule('.neon-widget-richtext-dialog h2',
-			'white-space:nowrap;margin:0 0 5px;font-size:100%')
+			'white-space:nowrap;margin:0 0 5px;font:bold 12px sans-serif;color:#000')
 		.styleRule('.neon-widget-richtext-dialog-controlrow',
 			'white-space:nowrap;margin-left:8em;margin-bottom:5px')
 		.styleRule('.neon-widget-richtext-dialog-controlrow *',
@@ -1741,9 +1740,7 @@ neon.widget = (function() {
 		.styleRule('.neon-widget-richtext-toolbar-icon',
 			'display:inline-block;vertical-align:middle;line-height:100%')
 		.styleRule('.neon-widget-richtext-toolbar-sideicon',
-			'margin-left:4px')
-		.styleRule('.neon-widget-richtext-toolbar-label',
-			'vertical-align:middle');
+			'margin-left:4px');
 
 	// detect if the browser allows contenteditable properly
 	// can't use isContentEditable since many firefoxes that support
