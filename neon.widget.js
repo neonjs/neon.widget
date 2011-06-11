@@ -1687,9 +1687,9 @@ neon.widget = (function() {
 	};
 
 	neon.styleRule('.neon-widget-richtext',
-		'border:1px solid ButtonShadow;width:auto;padding:1px;background:#fff;color:#000')
+		'border:1px solid ButtonShadow;width:auto;padding:1px')
 		.styleRule('.neon-widget-richtext-toolbar',
-			'font:12px sans-serif;margin:0 0 1px 0;background:#f9f6f3')
+			'font:12px sans-serif;margin:0 0 1px 0;background:#f9f6f3;color:#000')
 		// button text needs to be re-set in FF (at least)
 		.styleRule('.neon-widget-richtext-toolbar-selectable',
 			'display:inline-block;padding:5px;cursor:default;vertical-align:middle;line-height:110%;min-height:14px')
@@ -1704,7 +1704,7 @@ neon.widget = (function() {
 		.styleRule('.neon-widget-richtext-toolbar-separator',
 			'display:inline-block;width:0;height:12px;margin:5px;border-left:1px solid #dfdcd9;vertical-align:middle;line-height:0')
 		.styleRule('.neon-widget-richtext-editor',
-			'max-height:27em')
+			'max-height:27em;background:transparent;color:inherit;font:inherit;background:rgba(255,255,255,0.1)')
 		.styleRule('.neon-widget-richtext-editor:focus',
 			'outline:none')
 		.styleRule('.neon-widget-richtext-editor :first-child',
@@ -1713,6 +1713,7 @@ neon.widget = (function() {
 			'.neon-widget-richtext-editor div, .neon-widget-richtext-editor table, '+
 			'.neon-widget-richtext-editor img, .neon-widget-richtext-editor object',
 			'min-height:1em;min-width:1em;outline:1px dotted ButtonShadow')
+		// "height" in a table cell block is a bit like a minimum height
 		.styleRule('.neon-widget-richtext-editor td, .neon-widget-richtext-editor th',
 			'height: 1.25em')
 	// outline:0 prevents dotted line in firefox
@@ -1722,7 +1723,7 @@ neon.widget = (function() {
 			'cursor:text;padding:1px 0 1px 2px;outline:0;min-height:5em;overflow:auto')
 	// min-height needed as textareas don't auto-expand
 		.styleRule('textarea.neon-widget-richtext-editor',
-			'width:100%;border:0;padding:0;margin:0;background:#fff;color:#000;font:inherit;min-height:14em')
+			'width:100%;border:0;padding:0;margin:0;min-height:14em')
 		.styleRule('.neon-widget-richtext-toolbar-altnotice',
 			'padding:5px;text-align:right')
 		.styleRule('.neon-widget-richtext-dialog',
