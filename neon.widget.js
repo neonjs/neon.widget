@@ -133,7 +133,7 @@ neon.widget = (function() {
 
 			// add in replacement break if necessary
 			if (needslinebreak) {
-				if (tag.hasinline || (prelayers ? text : /\S/.test(newtext))) {
+				if (tag.hasinline || (prelayers ? newtext : /\S/.test(newtext))) {
 					if (!prelayers) {
 						text = text.replace(/\s+$/, '');
 						newtext = newtext.replace(/^\s*/, '<br>');
@@ -159,6 +159,16 @@ neon.widget = (function() {
 				tag = null;
 				continue;
 			}
+
+			/*
+			// filter unnecessary <br> - ie where the current line of text
+			// would end anyway (and we have a current line of text)
+			if (tag.name === 'br' && inlinecontext) {
+				needslinebreak = true;
+				tag = null;
+				continue;
+			}
+			*/
 
 			// filter MS conditional elements
 			if (tag.name === '!' && /^(--)?\[(end)?if/i.test(tag.contents)) {
