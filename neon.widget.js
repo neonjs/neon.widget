@@ -168,6 +168,15 @@ neon.widget = (function() {
 				lasttag.isblock || lasttag.isblocksep || lasttag.name === 'br' ? false :
 				inlinecontext;
 
+			// filter everything inside script and style tags
+			if (topstack === 'script' || topstack === 'style') {
+				text = '';
+				if (tag.name !== 'script' && tag.name !== 'style') {
+					tag = null;
+					continue;
+				}
+			}
+		
 			// filter some tags all the time
 			if (!tag.isblock && !tag.isblocksep && !tag.hasinline && //opt
 				filtertag.test(tag.name)) {
@@ -192,13 +201,6 @@ neon.widget = (function() {
 				continue;
 			}
 
-			if ((topstack === 'script' || topstack === 'style') &&
-				(tag.name !== 'script' && tag.name !== 'style')) {
-				tag = null;
-				text = '';
-				continue;
-			}
-		
 			// get and filter tag contents (attributes)
 			if (tag.contents && tag.name !== '!') {
 
