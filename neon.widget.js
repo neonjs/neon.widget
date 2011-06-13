@@ -93,6 +93,7 @@ neon.widget = (function() {
 
 			inlinecontext = false,
 			needslinebreak = false,
+			insertbr = false,
 			prelayers = 0,
 
 			attribs,
@@ -125,6 +126,21 @@ neon.widget = (function() {
 			tag.isblocksep = !tag.isblock && blockseparator.test(tag.name);
 			tag.hasinline = !tag.isblock && !tag.isblocksep && hasinlinereg.test(tag.name);
 
+			// insert delayed br now unless we're at the end of a block, start of p, etc
+			if (insertbr && 
+				((prelayers ? newtext : /\S/.test(newtext)) ||
+					tag.name === 'br' ||
+					(!tag.isblock && !tag.isblocksep) ||
+					(!tag.close && tag.name !== 'p')
+					)) {
+				if (!prelayers) {
+					text = text.replace(/\s+$/, '');
+					newtext = newtext.replace(/^\s*/, '');
+				}
+				newtext = '<br>' + newtext;
+				needslinebreak = false;
+			}
+
 			// stop using needslinebreak if...
 			if (needslinebreak && !(prelayers ? text : /\S/.test(text)) &&
 				(lasttag.isblock || lasttag.isblocksep || lasttag.name === 'br')) {
@@ -136,11 +152,9 @@ neon.widget = (function() {
 				if (tag.hasinline || (prelayers ? newtext : /\S/.test(newtext))) {
 					if (!prelayers) {
 						text = text.replace(/\s+$/, '');
-						newtext = newtext.replace(/^\s*/, '<br>');
+						newtext = newtext.replace(/^\s*/, '');
 					}
-					else {
-						newtext = '<br>' + newtext;
-					}
+					newtext = '<br>' + newtext;
 					needslinebreak = false;
 				}
 			}
@@ -150,7 +164,8 @@ neon.widget = (function() {
 			textfull = prelayers ? text : /\S/.test(text);
 			
 			// work out if we have inline context up to this point
-			inlinecontext = textfull || lasttag.hasinline ? true :
+			inlinecontext = insertbr ? false :
+				textfull || lasttag.hasinline ? true :
 				lasttag.isblock || lasttag.isblocksep || lasttag.name === 'br' ? false :
 				inlinecontext;
 
@@ -160,15 +175,16 @@ neon.widget = (function() {
 				continue;
 			}
 
-			/*
 			// filter unnecessary <br> - ie where the current line of text
 			// would end anyway (and we have a current line of text)
 			if (tag.name === 'br' && inlinecontext) {
-				needslinebreak = true;
+				insertbr = true;
 				tag = null;
 				continue;
 			}
-			*/
+			else {
+				insertbr = false;
+			}
 
 			// filter MS conditional elements
 			if (tag.name === '!' && /^(--)?\[(end)?if/i.test(tag.contents)) {
@@ -247,18 +263,6 @@ neon.widget = (function() {
 				}
 			}
 			
-			/*
-			// strip br tags, replacing them only if followed by inline content
-			// this removes the <br> from the end of paragraphs/blocks
-			if (tag.name === 'br' &&
-				(lasttag.isblock ? false : lasttag.name !== 'p' ? popen :
-				lasttag.close ? false : true)) {
-				needslinebreak = true;
-				tag = null;
-				continue;
-			}
-			*/
-
 			// from this point, all accumulated text is treated as one block
 			// no breaking out from this point
 
