@@ -66,10 +66,10 @@ neon.widget = (function() {
 
 			// regular expression to parse attributes
 			// 1: attname; 2: quotemark; 3: quotecontents; 4: nonquotecontents
-			attribreg = /([^\s=]+)(?:\s*=\s*(?:(["'])([\s\S]*?)\2|(\S*)))?/g,
+			attribreg = /([^\s=]+)(?:\s*=\s*(?:(["'])([\s\S]*?)\2|(\S+)))?/g,
 
 			// block level, structural, no optional tags
-			blockreg = /^(?:h[1-6]|ul|ol|dl|menu|dir|pre|hr|blockquote|address|center|div|isindex|form|fieldset|table|style|(no)?script|section|article|aside|hgroup|header|footer|nav|figure)$/,
+			blockreg = /^(?:h[1-6]|div|ul|ol|dl|section|menu|dir|pre|hr|blockquote|address|center|isindex|form|fieldset|table|style|script|noscript|article|aside|hgroup|header|footer|nav|figure)$/,
 
 			// elements that separate lines, lesser than the above blocks, 
 			// may have optional tags
@@ -142,14 +142,13 @@ neon.widget = (function() {
 			}
 
 			// stop using needslinebreak if...
-			if (needslinebreak && !(prelayers ? text : /\S/.test(text)) &&
-				(lasttag.isblock || lasttag.isblocksep || lasttag.name === 'br')) {
-				needslinebreak = false;
-			}
-
-			// add in replacement break if necessary
+			// add in replacement line break if necessary
 			if (needslinebreak) {
-				if (tag.hasinline || (prelayers ? newtext : /\S/.test(newtext))) {
+				if (!(prelayers ? text : /\S/.test(text)) &&
+					(lasttag.isblock || lasttag.isblocksep || lasttag.name === 'br')) {
+					needslinebreak = false;
+				}
+				else if (tag.hasinline || (prelayers ? newtext : /\S/.test(newtext))) {
 					if (!prelayers) {
 						text = text.replace(/\s+$/, '');
 						newtext = newtext.replace(/^\s*/, '');
@@ -170,7 +169,8 @@ neon.widget = (function() {
 				inlinecontext;
 
 			// filter some tags all the time
-			if (filtertag.test(tag.name)) {
+			if (!tag.isblock && !tag.isblocksep && !tag.hasinline && //opt
+				filtertag.test(tag.name)) {
 				tag = null;
 				continue;
 			}
@@ -187,7 +187,7 @@ neon.widget = (function() {
 			}
 
 			// filter MS conditional elements
-			if (tag.name === '!' && /^(--)?\[(end)?if/i.test(tag.contents)) {
+			if (tag.name === '!' && /^(?:--)?\[(?:end)?if/i.test(tag.contents)) {
 				tag = null;
 				continue;
 			}
@@ -200,7 +200,7 @@ neon.widget = (function() {
 			}
 		
 			// get and filter tag contents (attributes)
-			if (tag.contents.length && tag.name !== '!') {
+			if (tag.contents && tag.name !== '!') {
 
 				attribs = '';
 				for (matches = attribreg.exec(tag.contents); matches;
@@ -230,8 +230,8 @@ neon.widget = (function() {
 							attribs += " class=\"" + classnames.join(' ') + "\"";
 						}
 					}
-					else if (att.name !== 'id' && att.name !== 'for' &&
-						att.name !== 'style' && att.name !== 'align' &&
+					else if (att.name !== 'style' && att.name !== 'id' &&
+						att.name !== 'for' && att.name !== 'align' &&
 						att.name !== 'contenteditable' &&
 						(att.name !== 'name' || tag.name !== 'a') &&
 						!/^on/.test(att.name)) {
@@ -319,14 +319,6 @@ neon.widget = (function() {
 					tag.isblocksep || tag.name === 'br' || tag.name === 'neon-widget-end') {
 					text = text.replace(/\s+$/, '');
 				}
-
-				/*
-				// remove preceding <br>
-				if (tag.isblock || tag.isblocksep || (popen && !tag.close && tag.name === 'p')) {
-					// hack - remove previous <br>
-					output = output.replace(/<br>$/, '');
-				}
-				*/
 
 				// normalise remaining whitespace
 				text = text.replace(/\s+/g, ' ');
