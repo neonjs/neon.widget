@@ -73,7 +73,7 @@ neon.widget = (function() {
 
 			// elements that separate lines, lesser than the above blocks, 
 			// may have optional tags
-			blockseparator = /^(?:p|li|tr|div|dd|dt|thead|tbody|tfoot)$/,
+			blockseparator = /^(?:p|li|t[dhr]|div|d[dt]|t(?:head|body|foot))$/,
 
 			// always filter these elements
 			filtertag = /^(base|html|body|head|title|meta|link|font)$/,
@@ -342,7 +342,7 @@ neon.widget = (function() {
 				// add new line at end (before tag)
 				if ((tag.isblock && !tag.close) || (topnotext && !popen && tag.name === '!') ||
 					tag.name === 'hr' || tag.name === 'isindex' ||
-					(!tag.close && (tag.isblocksep)) ||
+					(!tag.close && (tag.isblocksep && tag.name !== 'td' && tag.name !== 'th')) ||
 					(tag.close && (tag.name === 'table' || tag.name === 'ul' ||
 						tag.name === 'ol' || tag.name === 'dl' || tag.name === 'tbody' ||
 						tag.name === 'thead' || tag.namt === 'tfoot'))) {
