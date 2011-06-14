@@ -1726,8 +1726,9 @@ neon.widget = (function() {
 	// outline:0 prevents dotted line in firefox
 	// position:relative is in case people paste in absolute positioned elements
 	// position:relative undone since it causes table editors in wrong place
+	// google chrome bug: cursor:text also affects cursor over scrollbar
 		.styleRule('div.neon-widget-richtext-editor',
-			'cursor:text;padding:1px 0 1px 2px;outline:0;min-height:5em;overflow:auto')
+			'padding:1px 0 1px 2px;outline:0;min-height:5em;overflow:auto')
 	// min-height needed as textareas don't auto-expand
 		.styleRule('textarea.neon-widget-richtext-editor',
 			'width:100%;border:0;padding:0;margin:0;min-height:14em')
