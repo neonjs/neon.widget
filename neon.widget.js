@@ -1710,7 +1710,7 @@ neon.widget = (function() {
 		.styleRule('.neon-widget-richtext-toolbar-selectable',
 			'display:inline-block;padding:4px;border:1px solid transparent;cursor:default;vertical-align:middle;line-height:110%;min-height:14px;font:12px sans-serif')
 		.styleRule('.neon-widget-richtext-toolbar-selectable:hover',
-			'border-color:#cacaca')
+			'border-color:#bdbdbd')
 		.styleRule('.neon-widget-richtext-active',
 			'border-color:#84a1b4;background:#e3e6e9')
 		.styleRule('.neon-widget-richtext-active:hover',
