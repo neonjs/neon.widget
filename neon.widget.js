@@ -1703,13 +1703,15 @@ neon.widget = (function() {
 			'margin:0 0 1px 0;background:#f9f6f3;color:#000')
 		// button text needs to be re-set in FF (at least)
 		.styleRule('.neon-widget-richtext-toolbar-selectable',
-			'display:inline-block;padding:5px;cursor:default;vertical-align:middle;line-height:110%;min-height:14px;font:12px sans-serif')
+			'display:inline-block;padding:4px;border:1px solid transparent;cursor:default;vertical-align:middle;line-height:110%;min-height:14px;font:12px sans-serif')
 		.styleRule('.neon-widget-richtext-toolbar-selectable:hover',
-			'padding:4px;border:1px solid #84a1b4')
+			'border-color:#84a1b4;background:#efefef')
+		.styleRule('.neon-widget-richtext-active',
+			'border-color:#84a1b4;background:#e4e8ea')
+		.styleRule('.neon-widget-richtext-active:hover',
+			'background:#d2d8df')
 		.styleRule('.neon-widget-richtext-toolbar-selectable:focus',
 			'outline:1px dotted #84a1b4')
-		.styleRule('.neon-widget-richtext-active',
-			'padding:4px;border:1px solid #84a1b4;background:#e0e4e6')
 		.styleRule('.neon-widget-richtext-toolbar-styleelement',
 			'margin:0;padding:0;white-space:nowrap')
 		.styleRule('.neon-widget-richtext-toolbar-separator',
