@@ -802,7 +802,7 @@ neon.widget = (function() {
 		.styleRule('.neon-widget-flyoutMenu-selected',
 			'background:Highlight;color:HighlightText')
 		.styleRule('.neon-widget-flyoutMenu ul, .neon-widget-flyoutMenu ol, .neon-widget-flyoutMenu li',
-			'list-style:none;padding:none;margin:none');
+			'list-style:none;padding:0;margin:0');
 
 	/*******************************************
 	 *       RICHTEXT - RICH TEXT EDITOR       *
