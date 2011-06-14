@@ -961,11 +961,16 @@ neon.widget = (function() {
 								}
 							}
 							else { // microsoft
-								comprng.moveToElementText(el[i]);
-								if (rng.compareEndPoints("StartToEnd", comprng) < 0 &&
-									rng.compareEndPoints("EndToStart", comprng) > 0) {
-									return el[i];
+								// sometimes IE seems to die complaining that el[i] is invalid
+								// so wrap it in try for now
+								try {
+									comprng.moveToElementText(el[i]);
+									if (rng.compareEndPoints("StartToEnd", comprng) < 0 &&
+										rng.compareEndPoints("EndToStart", comprng) > 0) {
+										return el[i];
+									}
 								}
+								catch (e) {}
 							}
 						}
 					}
