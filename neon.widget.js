@@ -167,6 +167,7 @@ neon.widget = (function() {
 				textfull || lasttag.hasinline ? true :
 				lasttag.isblock || lasttag.isblocksep || lasttag.name === 'br' ? false :
 				inlinecontext;
+			insertbr = false;
 
 			// filter everything inside script and style tags
 			if (topstack === 'script' || topstack === 'style') {
@@ -190,9 +191,6 @@ neon.widget = (function() {
 				insertbr = true;
 				tag = null;
 				continue;
-			}
-			else {
-				insertbr = false;
 			}
 
 			// filter MS conditional elements
