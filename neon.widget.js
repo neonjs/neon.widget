@@ -1705,11 +1705,11 @@ neon.widget = (function() {
 		.styleRule('.neon-widget-richtext-toolbar-selectable',
 			'display:inline-block;padding:4px;border:1px solid transparent;cursor:default;vertical-align:middle;line-height:110%;min-height:14px;font:12px sans-serif')
 		.styleRule('.neon-widget-richtext-toolbar-selectable:hover',
-			'border-color:#84a1b4;background:#efefef')
+			'border-color:#cacaca')
 		.styleRule('.neon-widget-richtext-active',
-			'border-color:#84a1b4;background:#e4e8ea')
+			'border-color:#84a1b4;background:#e3e6e9')
 		.styleRule('.neon-widget-richtext-active:hover',
-			'background:#d2d8df')
+			'border-color:#84a1b4;background:#d6dde5')
 		.styleRule('.neon-widget-richtext-toolbar-selectable:focus',
 			'outline:1px dotted #84a1b4')
 		.styleRule('.neon-widget-richtext-toolbar-styleelement',
