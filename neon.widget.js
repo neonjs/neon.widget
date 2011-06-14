@@ -411,17 +411,23 @@ neon.widget = (function() {
 			classnames, found,
 			classlist = acceptclasses || [],
 			els = editor[0].getElementsByTagName('*'),
-			element;
+			element, tagname;
 
 		for (i = els.length; i--;) {
 			element = els[i];
+			tagname = element.tagName.toLowerCase();
 
 			if (element.style && element.style.cssText) {
 				element.style.cssText = "";
 				element.removeAttribute("style");
 			}
-			if (element.tagName === "a") {
+			if (tagname === "a") {
 				element.removeAttribute('name');
+			}
+			else if (tagname === "font") {
+				element.removeAttribute('size');
+				element.removeAttribute('color');
+				element.removeAttribute('face');
 			}
 			element.removeAttribute("for");
 			element.removeAttribute("id");
