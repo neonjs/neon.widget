@@ -167,6 +167,7 @@ neon.widget = (function() {
 				textfull || lasttag.hasinline ? true :
 				lasttag.isblock || lasttag.isblocksep || lasttag.name === 'br' ? false :
 				inlinecontext;
+			insertbr = false;
 
 			// filter everything inside script and style tags
 			if (topstack === 'script' || topstack === 'style') {
@@ -190,9 +191,6 @@ neon.widget = (function() {
 				insertbr = true;
 				tag = null;
 				continue;
-			}
-			else {
-				insertbr = false;
 			}
 
 			// filter MS conditional elements
@@ -413,17 +411,23 @@ neon.widget = (function() {
 			classnames, found,
 			classlist = acceptclasses || [],
 			els = editor[0].getElementsByTagName('*'),
-			element;
+			element, tagname;
 
 		for (i = els.length; i--;) {
 			element = els[i];
+			tagname = element.tagName.toLowerCase();
 
 			if (element.style && element.style.cssText) {
 				element.style.cssText = "";
 				element.removeAttribute("style");
 			}
-			if (element.tagName === "a") {
+			if (tagname === "a") {
 				element.removeAttribute('name');
+			}
+			else if (tagname === "font") {
+				element.removeAttribute('size');
+				element.removeAttribute('color');
+				element.removeAttribute('face');
 			}
 			element.removeAttribute("for");
 			element.removeAttribute("id");
@@ -802,7 +806,7 @@ neon.widget = (function() {
 		.styleRule('.neon-widget-flyoutMenu-selected',
 			'background:Highlight;color:HighlightText')
 		.styleRule('.neon-widget-flyoutMenu ul, .neon-widget-flyoutMenu ol, .neon-widget-flyoutMenu li',
-			'list-style:none;padding:none;margin:none');
+			'list-style:none;padding:0;margin:0');
 
 	/*******************************************
 	 *       RICHTEXT - RICH TEXT EDITOR       *
@@ -957,11 +961,16 @@ neon.widget = (function() {
 								}
 							}
 							else { // microsoft
-								comprng.moveToElementText(el[i]);
-								if (rng.compareEndPoints("StartToEnd", comprng) < 0 &&
-									rng.compareEndPoints("EndToStart", comprng) > 0) {
-									return el[i];
+								// sometimes IE seems to die complaining that el[i] is invalid
+								// so wrap it in try for now
+								try {
+									comprng.moveToElementText(el[i]);
+									if (rng.compareEndPoints("StartToEnd", comprng) < 0 &&
+										rng.compareEndPoints("EndToStart", comprng) > 0) {
+										return el[i];
+									}
 								}
+								catch (e) {}
 							}
 						}
 					}
@@ -1699,13 +1708,15 @@ neon.widget = (function() {
 			'margin:0 0 1px 0;background:#f9f6f3;color:#000')
 		// button text needs to be re-set in FF (at least)
 		.styleRule('.neon-widget-richtext-toolbar-selectable',
-			'display:inline-block;padding:5px;cursor:default;vertical-align:middle;line-height:110%;min-height:14px;font:12px sans-serif')
+			'display:inline-block;padding:4px;border:1px solid transparent;cursor:default;vertical-align:middle;line-height:110%;min-height:14px;font:12px sans-serif')
 		.styleRule('.neon-widget-richtext-toolbar-selectable:hover',
-			'padding:4px;border:1px solid #84a1b4')
+			'border-color:#bdbdbd')
+		.styleRule('.neon-widget-richtext-active',
+			'border-color:#84a1b4;background:#e3e6e9')
+		.styleRule('.neon-widget-richtext-active:hover',
+			'border-color:#84a1b4;background:#d6dde5')
 		.styleRule('.neon-widget-richtext-toolbar-selectable:focus',
 			'outline:1px dotted #84a1b4')
-		.styleRule('.neon-widget-richtext-active',
-			'padding:4px;border:1px solid #84a1b4;background:#e0e4e6')
 		.styleRule('.neon-widget-richtext-toolbar-styleelement',
 			'margin:0;padding:0;white-space:nowrap')
 		.styleRule('.neon-widget-richtext-toolbar-separator',
@@ -1726,8 +1737,9 @@ neon.widget = (function() {
 	// outline:0 prevents dotted line in firefox
 	// position:relative is in case people paste in absolute positioned elements
 	// position:relative undone since it causes table editors in wrong place
+	// google chrome bug: cursor:text also affects cursor over scrollbar
 		.styleRule('div.neon-widget-richtext-editor',
-			'cursor:text;padding:1px 0 1px 2px;outline:0;min-height:5em;overflow:auto')
+			'padding:1px 0 1px 2px;outline:0;min-height:5em;overflow:auto')
 	// min-height needed as textareas don't auto-expand
 		.styleRule('textarea.neon-widget-richtext-editor',
 			'width:100%;border:0;padding:0;margin:0;min-height:14em')
