@@ -10,8 +10,8 @@ The library is built on top of the Neon Javascript Library.  It includes:
 
 - A rich text editing control.  Allowing for rich text editing within the
   browser, this widget includes a user-friendly toolbar and returns the
-	rich text content in HTML format, even including a sophisticated HTML
-	filter to clean up and somewhat normalise generated HTML.
+  rich text content in HTML format, even including a sophisticated HTML
+  filter to clean up and somewhat normalise generated HTML.
 
 - A flyout widget, for generating a popup window flying out underneath or
   beside an element.
@@ -42,9 +42,9 @@ You can then dynamically load the widget library, contained in
 neon.widget.js, using code such as the following:
 
 neon.load('neon.widget.js', function() {
-	neon.ready(function() {
-		// widget setup code goes here
-	});
+  neon.ready(function() {
+    // widget setup code goes here
+  });
 });
 
 The Javascript files are available in a minified and a source version.  The
