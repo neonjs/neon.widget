@@ -1,0 +1,78 @@
+
+The Neon Javascript Widget Library
+==================================
+
+The Neon Javascript Widget Library aims to provide rich, reliable,
+user-friendly user interface controls for use in Javascript web
+applications.
+
+The library is built on top of the Neon Javascript Library.  It includes:
+
+- A rich text editing control.  Allowing for rich text editing within the
+  browser, this widget includes a user-friendly toolbar and returns the
+	rich text content in HTML format, even including a sophisticated HTML
+	filter to clean up and somewhat normalise generated HTML.
+
+- A flyout widget, for generating a popup window flying out underneath or
+  beside an element.
+
+- A flyoutMenu widget, for specifically generating a popup menu such as a
+  drop-down menu or autocomplete menu.
+
+All widgets accept a variety of configuration options and are fully
+programmable, allowing functions to hook into actions like showing or
+hiding flyouts, and allowing the widget to be controlled or even reset
+back to its former state.
+
+If desired, the widgets can be made to animate, with popup windows fading
+into view and fading out.
+
+Neon widgets aim to be well-supported on all browsers which support Neon.
+Its rich text editor component provides an alternative plain text editor
+for use in browsers which do not support in-page rich text editing.
+
+Installation and use
+====================
+
+First, the core of the Neon Javascript Library must be installed.  This is
+contained within the file neon.js.  This file should be included within
+a <script> element in the <head> section of your page.
+
+You can then dynamically load the widget library, contained in
+neon.widget.js, using code such as the following:
+
+neon.load('neon.widget.js', function() {
+	neon.ready(function() {
+		// widget setup code goes here
+	});
+});
+
+The Javascript files are available in a minified and a source version.  The
+minified version is intended for production use and will save bandwidth and
+speed up page loads, particularly when your server is configured to use
+gzip compression.
+
+Documentation
+=============
+
+See http://neonjs.com for documentation and examples of use.
+
+The archive also contains a demos/ directory which contains some small
+examples you can run in your browser.
+
+License
+=======
+
+The Neon Javascript Widget Library
+
+Part of The Neon Javascript Library
+Copyright (c) 2011, Thomas Rutter
+All rights reserved.
+
+The Neon Javascript Widget Library is available for use under the Modified
+BSD License included in this distribution or available at:
+http://neonjs/license
+
+The Modified BSD License is an open source free software license compatible
+with the GNU General Public License.  Neon may be redistributed in your own
+software, commercial or open, providing that its few license terms are met.
