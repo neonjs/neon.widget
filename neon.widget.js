@@ -102,6 +102,7 @@ neon.widget = (function() {
 
 			text = '', newtext, output = '',
 			textfull,
+			hascontent = false, // whether there is any content here at all
 
 			matches;
 
@@ -397,12 +398,17 @@ neon.widget = (function() {
 				output += "<" + (tag.close || '') + tag.name + tag.contents + ">";
 			}
 
+			if (!hascontent && (textfull || (!tag.strip &&
+				(tag.hasinline || tag.name == 'hr')))) {
+				hascontent = true;
+			}
+
 			text = '';
 		}
 
 		output += text;
 
-		return output.replace(/^\s+|\s+$/g, '');
+		return hascontent ? output.replace(/^\s+|\s+$/g, '') : null;
 	};
 
 	var filterinplace = function(editor, acceptclasses) {
