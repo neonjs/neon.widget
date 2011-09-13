@@ -36,7 +36,7 @@ See http://neonjs.com for documentation and examples of use.
 */
 
 /*jslint browser:true,sloppy:true,vars:true,plusplus:true,regexp:true,
-	type:true,continue:true */
+	type:true,continue:true,white:true */
 /*global neon:true,Range,opera */
 
 /**
@@ -399,7 +399,7 @@ neon.widget = (function() {
 			}
 
 			if (!hascontent && (textfull || (!tag.strip &&
-				(tag.hasinline || tag.name == 'hr')))) {
+				(tag.hasinline || tag.name === 'hr')))) {
 				hascontent = true;
 			}
 
