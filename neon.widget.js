@@ -680,7 +680,7 @@ neon.widget = (function() {
 			'display:none')
 		// some ugly-ish hacks for ie6/ie7.  the broken background-image makes transparent areas part of the focus:
 		.styleRule('.neon-widget-flyout-host',
-			'position:relative;display:inline-block;outline:none;z-index:998;background-image:url(about:blank)');
+			'position:relative;display:inline-block;outline:none;z-index:998');
 	
 	/*******************************************
 	 *       FLYOUTMENU - DROP-DOWN MENU       *
