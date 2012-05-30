@@ -435,6 +435,7 @@ neon.widget = (function() {
 					neon.select(elparent).insert(elparent.firstChild);
 				}
 				neon.select(elparent).remove();
+				elcount--;
 				i--;
 			}
 
@@ -1077,6 +1078,11 @@ neon.widget = (function() {
 			var onpaste = function() {
 				setTimeout(function() {
 					filterinplace(editor, acceptclasses);
+					// Avoid visual glitch when carat moves
+					if (window.getSelection) {
+						window.getSelection().removeAllRanges();
+						restoreselection();
+					}
 				}, 0);
 			};
 
