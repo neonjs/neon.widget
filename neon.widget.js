@@ -36,7 +36,7 @@ See http://neonjs.com for documentation and examples of use.
 */
 
 /*jslint browser:true,sloppy:true,vars:true,plusplus:true,regexp:true,
-	type:true,continue:true,white:true */
+	continue:true,white:true */
 /*global neon:true,Range,opera */
 
 /**
@@ -51,7 +51,10 @@ neon.widget = (function() {
 	var
 		canedit,
 		gid = 0,
-		widgets = {};
+		widgets = {},
+
+		// block level, structural, no optional tags - global
+		blockreg = /^(?:h[1-6]|div|ul|ol|dl|section|menu|dir|pre|hr|blockquote|address|center|isindex|form|fieldset|table|style|script|noscript|article|aside|hgroup|header|footer|nav|figure)$/;
 	
 	var htmlconvert = function(input, strippara, wstopara, acceptclasses) {
 	// helper function for normalising HTML
@@ -68,8 +71,6 @@ neon.widget = (function() {
 			// 1: attname; 2: quotemark; 3: quotecontents; 4: nonquotecontents
 			attribreg = /([^\s=]+)(?:\s*=\s*(?:(["'])([\s\S]*?)\2|(\S+)))?/g,
 
-			// block level, structural, no optional tags
-			blockreg = /^(?:h[1-6]|div|ul|ol|dl|section|menu|dir|pre|hr|blockquote|address|center|isindex|form|fieldset|table|style|script|noscript|article|aside|hgroup|header|footer|nav|figure)$/,
 
 			// elements that separate lines, lesser than the above blocks, 
 			// may have optional tags
@@ -417,12 +418,27 @@ neon.widget = (function() {
 			classnames, found,
 			classlist = acceptclasses || [],
 			els = editor[0].getElementsByTagName('*'),
-			element, tagname;
+			elcount = els.length,
+			inlineonly = /^(?:p|h[1-6]|pre)$/,
+			element, tagname, elparent;
 
-		for (i = els.length; i--;) {
+		for (i = 0; i < elcount; i++) {
 			element = els[i];
 			tagname = element.tagName.toLowerCase();
+			elparent = element.parentNode;
 
+			// recent Chrome bug inserting block elements in p,h1-6,pre
+			if (blockreg.test(tagname) &&
+				inlineonly.test(elparent.tagName.toLowerCase())) {
+
+				while (elparent.firstChild) {
+					neon.select(elparent).insert(elparent.firstChild);
+				}
+				neon.select(elparent).remove();
+				i--;
+			}
+
+			// filter element attributes
 			if (element.style && element.style.cssText) {
 				element.style.cssText = "";
 				element.removeAttribute("style");
@@ -440,6 +456,7 @@ neon.widget = (function() {
 			element.removeAttribute("align");
 			element.removeAttribute("contentEditable");
 
+			// only allow specific classnames (those in classlist)
 			if (element.className) {
 				classnames = element.className.split(/\s+/);
 				for (j = classnames.length; j--;) {
@@ -460,6 +477,7 @@ neon.widget = (function() {
 				}
 			}
 
+			// filter attributes starting with "on"
 			for (j = element.attributes && element.attributes.length; j--;) {
 				if (/^on/i.test(element.attributes[j].name)) {
 					element.removeAttribute(element.attributes[j].name);
