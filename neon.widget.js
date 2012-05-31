@@ -35,8 +35,8 @@ See http://neonjs.com for documentation and examples of use.
 
 */
 
-/*jslint browser:true,sloppy:true,vars:true,plusplus:true,regexp:true,
-	continue:true,white:true */
+/*jshint strict:false,smarttabs:true,browser:true,
+	curly:true,eqeqeq:true,forin:true,immed:true,latedef:true,newcap:true,noarg:true,undef:true,trailing:true */
 /*global neon:true,Range,opera */
 
 /**
@@ -72,7 +72,7 @@ neon.widget = (function() {
 			attribreg = /([^\s=]+)(?:\s*=\s*(?:(["'])([\s\S]*?)\2|(\S+)))?/g,
 
 
-			// elements that separate lines, lesser than the above blocks, 
+			// elements that separate lines, lesser than the above blocks,
 			// may have optional tags
 			blockseparator = /^(?:p|li|t[dhr]|div|d[dt]|t(?:head|body|foot))$/,
 
@@ -129,7 +129,7 @@ neon.widget = (function() {
 			tag.hasinline = !tag.isblock && !tag.isblocksep && hasinlinereg.test(tag.name);
 
 			// insert delayed br now unless we're at the end of a block, start of p, etc
-			if (insertbr && 
+			if (insertbr &&
 				((prelayers ? newtext : /\S/.test(newtext)) ||
 					tag.name === 'br' ||
 					(!tag.isblock && !tag.isblocksep) ||
@@ -327,7 +327,7 @@ neon.widget = (function() {
 			}
 
 			// convert < and & where it is not part of tag or entity
-			text = strippara ? 
+			text = strippara ?
 				text.replace(/&lt;(?![\/\w!])/g, '<').replace(/&amp;(?![\w#])/g, '&') :
 				text.replace(/<(?![\/\w!])/g, '&lt;').replace(/&(?![\w#])/g, '&amp;');
 
@@ -1101,7 +1101,7 @@ neon.widget = (function() {
 					.addClass('neon-widget-richtext-toolbar-icon')
 					.style('width', iconsize+"px")
 					.style('height', iconsize+"px")
-					.style('background', 
+					.style('background',
 						'url('+imageurl+
 							') -1px -'+((iconsize+2)*iconnum+1)+'px');
 			};
