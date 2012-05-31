@@ -409,7 +409,7 @@ neon.widget = (function() {
 
 		output += text;
 
-		return hascontent ? output.replace(/^\s+|\s+$/g, '') : null;
+		return hascontent ? output.replace(/^\s+|\s+$/g, '') : '';
 	};
 
 	var filterinplace = function(editor, acceptclasses) {
