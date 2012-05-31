@@ -41,7 +41,7 @@ See http://neonjs.com for documentation and examples of use.
 
 /**
 @preserve The Neon Javascript Library: widget
-Copyright (c) Thomas Rutter 2011
+Copyright (c) Thomas Rutter 2012
 http://neonjs.com
 http://neonjs.com/license
 */
