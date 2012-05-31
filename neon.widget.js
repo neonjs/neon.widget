@@ -678,7 +678,6 @@ neon.widget = (function() {
 		'position:absolute;z-index:999;border:1px solid #84a1b4;padding:1px;background:#fff;min-width:14px;box-shadow:0 4px 10px rgba(0,0,0,0.16)')
 		.styleRule('.neon-widget-flyout-hidden',
 			'display:none')
-		// some ugly-ish hacks for ie6/ie7.  the broken background-image makes transparent areas part of the focus:
 		.styleRule('.neon-widget-flyout-host',
 			'position:relative;display:inline-block;outline:none;z-index:998');
 	
@@ -1209,6 +1208,9 @@ neon.widget = (function() {
 					setTimeout(function() {
 						editor[0].focus();
 						getrange();
+						// when switching back, filtering may have removed an empty block
+						// or done something else so we need to update controls
+						updatecontrols();
 					}, 0);
 				};
 
