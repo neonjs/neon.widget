@@ -428,7 +428,7 @@ neon.widget = (function() {
 			elparent = element.parentNode;
 
 			// recent Chrome bug inserting block elements in p,h1-6,pre
-			if (blockreg.test(tagname) &&
+			if ((tagname == 'p' || blockreg.test(tagname)) &&
 				inlineonly.test(elparent.tagName.toLowerCase())) {
 
 				while (elparent.firstChild) {
