@@ -880,6 +880,7 @@ neon.widget = (function() {
 					// if empty editor, full it with a <p></p> and select.
 					// this helps start new documents off with a proper paragraph at start
 					// esp in chrome
+					// Note: still appears to be required as of Chrome 19
 					if (!editor[0].childNodes.length) {
 						sel.removeAllRanges();
 						rng = document.createRange();
