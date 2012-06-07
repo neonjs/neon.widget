@@ -840,6 +840,13 @@ neon.widget = (function() {
 		var
 			i,
 			myopts = opts || {},
+			// detect if the browser allows contenteditable properly
+			// can't use isContentEditable since many firefoxes that support
+			// contenteditable don't support this property
+			canedit = document.body.contentEditable !== undefined &&
+				(!/\b(Apple)?WebKit\/(53[0-4]|5[0-2]|[0-4])/.test(navigator.userAgent) ||
+					(!/\bMobile\//.test(navigator.userAgent) &&
+					!/\bMobile Safari\//.test(navigator.userAgent))),
 			container = el.insert({div:''})
 				.addClass('neon-widget-richtext'),
 			iconsize = myopts.iconsize || 14,
@@ -1799,16 +1806,6 @@ neon.widget = (function() {
 			'display:inline-block;vertical-align:middle;line-height:100%')
 		.styleRule('.neon-widget-richtext-toolbar-sideicon',
 			'margin-left:4px');
-
-	// detect if the browser allows contenteditable properly
-	// can't use isContentEditable since many firefoxes that support
-	// contenteditable don't support this property
-	neon.ready(function() {
-		canedit = document.body.contentEditable !== undefined &&
-			(!/\b(Apple)?WebKit\/(53[0-4]|5[0-2]|[0-4])/.test(navigator.userAgent) ||
-				(!/\bMobile\//.test(navigator.userAgent) &&
-				!/\bMobile Safari\//.test(navigator.userAgent)));
-	});
 
 	return function(func, opts) {
 		if (widgets.hasOwnProperty(func)) {
