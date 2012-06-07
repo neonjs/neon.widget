@@ -1019,6 +1019,7 @@ neon.widget = (function() {
 					// we add a dummy element inside the editor then remove it so that we never operate
 					// with the entire contents selected.  This avoids a number of
 					// Firefox bugs
+					// Note: Firefox no longer showing issues as of v 13.0, consider removing this.
 					dummy = editor.append({div:null});
 					try {
 						document.execCommand(command, false, param);
