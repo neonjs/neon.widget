@@ -1010,8 +1010,7 @@ neon.widget = (function() {
 
 			var docommand = function(command, param) {
 				var
-					dummy,
-					foc = document.activeElement;
+					dummy;
 				restoreselection();
 				if (getrange()) {
 					try {
@@ -1027,9 +1026,6 @@ neon.widget = (function() {
 					dummy.remove();
 					getrange();
 					updatecontrols();
-				}
-				if (foc && foc !== editor[0] && foc !== document.activeElement) {
-					foc.focus();
 				}
 			};
 
