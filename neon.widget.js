@@ -937,6 +937,14 @@ neon.widget = (function() {
 				}
 			};
 
+			var restoreifnotfocused = function() {
+			// checks if nothing is focused anymore
+			// if so, gives focus back to editor
+				if (document.activeElement === document.body) {
+					restoreselection();
+				}
+			}
+
 			var saveelements = function(tagname) {
 				var
 					i,
@@ -1327,7 +1335,7 @@ neon.widget = (function() {
 				flyout = widgets.flyout(chooser, extendobject(myopts, {
 					contents: flyoutform,
 					onfocus: onfocus,
-					onblur: restoreselection
+					onblur: restoreifnotfocused
 					}));
 
 				teardowns.push(function() {
@@ -1410,7 +1418,7 @@ neon.widget = (function() {
 				flyout = widgets.flyout(chooser, extendobject(myopts, {
 					contents: flyoutform,
 					onfocus: onfocus,
-					onblur: restoreselection
+					onblur: restoreifnotfocused
 					}));
 
 				teardowns.push(function() {
@@ -1515,7 +1523,7 @@ neon.widget = (function() {
 				flyout = widgets.flyout(chooser, extendobject(myopts, {
 					contents: flyoutform,
 					onfocus: onfocus,
-					onblur: restoreselection
+					onblur: restoreifnotfocused
 					}));
 
 				teardowns.push(function() {
@@ -1567,7 +1575,7 @@ neon.widget = (function() {
 				menu = widgets.flyoutMenu(chooser, extendobject(myopts, {
 					contents: selections,
 					onselect: onselect,
-					onblur: restoreselection
+					onblur: restoreifnotfocused
 					}));
 
 				teardowns.push(function() {
