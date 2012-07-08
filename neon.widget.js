@@ -840,10 +840,13 @@ neon.widget = (function() {
 			i,
 			myopts = opts || {},
 			// detect if the browser allows contenteditable properly
-			// can't use isContentEditable since many firefoxes that support
-			// contenteditable don't support this property
+			// can't use isContentEditible as there are older (pre 4.0)
+			// firefox versions that support contenteditable but not this property
+			// also, we need to exclude webkit 528 to 534.2 on mobile because
+			// they claim to support contentEditable but it doesn't actually work
+			// (fixed in Android 4/iOS 5)
 			canedit = document.body.contentEditable !== undefined &&
-				(!/\b(Apple)?WebKit\/(53[0-4]|5[0-2]|[0-4])/.test(navigator.userAgent) ||
+				(!/\b(Apple)?WebKit\/(52|53[0-3]|534\.[0-2])/.test(navigator.userAgent) ||
 					(!/\bMobile\//.test(navigator.userAgent) &&
 					!/\bMobile Safari\//.test(navigator.userAgent))),
 			container = el.insert({div:''})
