@@ -49,7 +49,6 @@ http://neonjs.com/license
 neon.widget = (function() {
 	
 	var
-		canedit,
 		gid = 0,
 		widgets = {},
 
