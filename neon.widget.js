@@ -611,15 +611,16 @@ neon.widget = (function() {
 		};
 
 		var onmousedown = function(evt) {
-			// close the flyout upon clicking again, unless we clicked in an input field
-			var tagname = evt.target.tagName && evt.target.tagName.toLowerCase();
-			var active = evt.target === document.activeElement ||
-				neon.select(evt.target).contains(document.activeElement) ||
-				(document.activeElement !== document.body && neon.select(document.activeElement).contains(evt.target));
+			// close an open flyout upon clicking again, unless we clicked in an input field
+			var
+				tagname = evt.target.tagName && evt.target.tagName.toLowerCase(),
+				// first determine if we clicked within an open flyout
+				active = evt.currentTarget === document.activeElement ||
+					neon.select(evt.currentTarget).contains(document.activeElement);
 
 			if (active && tagname !== 'input' && tagname !== 'select' && tagname !== 'option') {
 				setTimeout(function() {
-					obj.blur();
+					document.activeElement.blur();
 					evt.stopPropagation();
 				}, 0);
 			}
