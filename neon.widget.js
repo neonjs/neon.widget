@@ -37,7 +37,7 @@ See http://neonjs.com for documentation and examples of use.
 
 /*jshint strict:false,smarttabs:true,browser:true,
 	curly:true,eqeqeq:true,forin:true,immed:true,latedef:true,newcap:true,noarg:true,undef:true,trailing:true */
-/*global neon:true,Range,opera */
+/*global neon:true,Range */
 
 /**
 @preserve The Neon Javascript Library: widget
@@ -610,6 +610,21 @@ neon.widget = (function() {
 			}
 		};
 
+		var onmousedown = function(evt) {
+			// close the flyout upon clicking again, unless we clicked in an input field
+			var tagname = evt.target.tagName && evt.target.tagName.toLowerCase();
+			var active = evt.target === document.activeElement ||
+				neon.select(evt.target).contains(document.activeElement) ||
+				(document.activeElement !== document.body && neon.select(document.activeElement).contains(evt.target));
+
+			if (active && tagname !== 'input' && tagname !== 'select' && tagname !== 'option') {
+				setTimeout(function() {
+					obj.blur();
+					evt.stopPropagation();
+				}, 0);
+			}
+		};
+
 		// closes the flyout (unless it's in hover mode)
 		// this works by removing focus from the flyout and its contents
 		obj.blur = function() {
@@ -633,6 +648,9 @@ neon.widget = (function() {
 				.unwatch(myopts.hover ? "mouseleave" : "focusout", onfocusout)
 				.unwatch("keydown", onkeydown)
 				.unwatch("keypress", onkeydown);
+			if (!myopts.ignoreClick && !myopts.hover) {
+				hosts.unwatch('mousedown', onmousedown);
+			}
 			for (i = hosts.length; i--;) {
 				neon.select(hosts[i]).insert(hosts[i].firstChild).remove();
 			}
@@ -655,6 +673,9 @@ neon.widget = (function() {
 		hosts.watch("keydown", onkeydown);
 		// ie in ietester does not fire keydown events??
 		hosts.watch("keypress", onkeydown);
+		if (!myopts.ignoreClick && !myopts.hover) {
+			hosts.watch('mousedown', onmousedown);
+		}
 
 		for (i = elements.length; i--;) {
 			wasfocused = document.activeElement;
