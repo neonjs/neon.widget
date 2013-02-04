@@ -4,7 +4,7 @@ The Neon Javascript Library: widget
 A widget library for Neon
 
 Part of the Neon Javascript Library
-Copyright (c) 2012, Thomas Rutter
+Copyright (c) 2013, Thomas Rutter
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
