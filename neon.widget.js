@@ -616,7 +616,7 @@ neon.widget = (function() {
 				tagname = evt.target.tagName && evt.target.tagName.toLowerCase(),
 				// first determine if we clicked within an open flyout
 				active = evt.currentTarget === document.activeElement ||
-					neon.select(evt.currentTarget).contains(document.activeElement);
+					neon.select(evt.currentTarget.parentNode).contains(document.activeElement);
 
 			if (active && tagname !== 'input' && tagname !== 'select' && tagname !== 'option') {
 				setTimeout(function() {
@@ -650,7 +650,7 @@ neon.widget = (function() {
 				.unwatch("keydown", onkeydown)
 				.unwatch("keypress", onkeydown);
 			if (!myopts.ignoreClick && !myopts.hover) {
-				hosts.unwatch('mousedown', onmousedown);
+				elements.unwatch('mousedown', onmousedown);
 			}
 			for (i = hosts.length; i--;) {
 				neon.select(hosts[i]).insert(hosts[i].firstChild).remove();
@@ -675,7 +675,7 @@ neon.widget = (function() {
 		// ie in ietester does not fire keydown events??
 		hosts.watch("keypress", onkeydown);
 		if (!myopts.ignoreClick && !myopts.hover) {
-			hosts.watch('mousedown', onmousedown);
+			elements.watch('mousedown', onmousedown);
 		}
 
 		for (i = elements.length; i--;) {
