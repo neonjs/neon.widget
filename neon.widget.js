@@ -621,8 +621,9 @@ neon.widget = (function() {
 			if (active && tagname !== 'input' && tagname !== 'select' && tagname !== 'option') {
 				setTimeout(function() {
 					document.activeElement.blur();
-					evt.stopPropagation();
 				}, 0);
+				evt.stopPropagation();
+				evt.preventDefault();
 			}
 		};
 
