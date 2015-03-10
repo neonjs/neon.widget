@@ -64,7 +64,7 @@ neon.widget = (function() {
 
 			// regular expression to parse input tag by tag
 			// 1: text; 2: tag; 3: slash; 4: tagname; 5: tagcontents; 6: endtext;
-			parsereg = /([\s\S]*?(?=<[\/\w!])|[\s\S]+)((?:<(\/?)(!|[\w\-]+)((?:[^>'"\-]+|-[^>'"\-]|"[\s\S]*?"|'[\s\S]*?'|--[\s\S]*?--)*)>?)?)/g,
+			parsereg = /([\s\S]*?(?=<[\/\w!])|[\s\S]+)((?:<(\/?)(!|\w[\w\-:]*)((?:[^>'"\-]+|-[^>'"\-]|"[\s\S]*?"|'[\s\S]*?'|--[\s\S]*?--)*)>?)?)/g,
 
 			// regular expression to parse attributes
 			// 1: attname; 2: quotemark; 3: quotecontents; 4: nonquotecontents
@@ -76,7 +76,7 @@ neon.widget = (function() {
 			blockseparator = /^(?:p|li|t[dhr]|div|d[dt]|t(?:head|body|foot))$/,
 
 			// always filter these elements
-			filtertag = /^(base|html|body|head|title|meta|link|font)$/,
+			filtertag = /^(base|html|body|head|title|meta|link|font|.+:.+)$/,
 
 			// these elements imply an inline context (just as text would)
 			// cannot include anything from elstack
@@ -233,6 +233,10 @@ neon.widget = (function() {
 					}
 					else if (att.name !== 'style' && att.name !== 'id' &&
 						att.name !== 'for' && att.name !== 'align' &&
+						att.name !== 'width' && att.name !== 'valign' &&
+						att.name !== 'height' &&
+						att.name !== 'cellspacing' && att.name !== 'cellpadding' &&
+						att.name !== 'border' &&
 						att.name !== 'contenteditable' &&
 						(att.name !== 'name' || tag.name !== 'a') &&
 						!/^on/.test(att.name)) {
@@ -455,6 +459,13 @@ neon.widget = (function() {
 			element.removeAttribute("id");
 			element.removeAttribute("align");
 			element.removeAttribute("contentEditable");
+
+			element.removeAttribute("width");
+			element.removeAttribute("valign");
+			element.removeAttribute("height");
+			element.removeAttribute("cellspacing");
+			element.removeAttribute("cellpadding");
+			element.removeAttribute("border");
 
 			// only allow specific classnames (those in classlist)
 			if (element.className) {
