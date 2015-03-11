@@ -232,11 +232,11 @@ neon.widget = (function() {
 						}
 					}
 					else if (att.name !== 'style' && att.name !== 'id' &&
-						att.name !== 'for' && att.name !== 'align' &&
-						att.name !== 'width' && att.name !== 'valign' &&
-						att.name !== 'height' &&
-						att.name !== 'cellspacing' && att.name !== 'cellpadding' &&
-						att.name !== 'border' &&
+						att.name !== 'for' && 
+						// strip styles
+						att.name !== 'style' &&
+						att.name !== 'border' && att.name !== 'cellpadding' && att.name !== 'cellspacing' &&
+						att.name !== 'width' && att.name !== 'height' && att.name !== 'charoff' &&
 						att.name !== 'contenteditable' &&
 						(att.name !== 'name' || tag.name !== 'a') &&
 						!/^on/.test(att.name)) {
