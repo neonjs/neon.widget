@@ -724,7 +724,6 @@ neon.widget = (function() {
 	// It takes the same options as flyout() with some extras.
 	// opt.contents is the contents, and any "a" element in
 	// that will turn into a menu option.
-	// You can change that with myopts.optiontag (default "a").
 		var
 			i,
 			myopts = opts || {},
@@ -740,13 +739,17 @@ neon.widget = (function() {
 				flyout, host, options,
 				currentsel = null;
 
+			var getoptions = function() {
+				return neon.select(flyout[0].getElementsByTagName('a'));
+			};
+
 			var updateselection = function(newval) {
-				if (currentsel !== null) {
-					neon.select(options[currentsel])
-						.removeClass('neon-widget-flyoutMenu-selected');
-				}
+				var options = getoptions();
+
+				options.removeClass('neon-widget-flyoutMenu-selected');
+
 				currentsel = newval;
-				if (currentsel !== null) {
+				if (newval !== null) {
 					neon.select(options[currentsel])
 						.addClass('neon-widget-flyoutMenu-selected');
 				}
@@ -765,17 +768,27 @@ neon.widget = (function() {
 				}
 			};
 
-			var onmouseenter = function(evt) {
+			var onmouseover = function(evt) {
+				var options = getoptions(),
+					el;
+
 				for (i = options.length; i--;) {
-					if (options[i] === evt.currentTarget) {
+					if (options[i] === evt.target || neon.select(options[i]).contains(evt.target)) {
 						updateselection(i);
 					}
 				}
 			};
 
 			var onclick = function(evt) {
-				onmouseenter.call(this, evt);
-				select(neon.select(evt.currentTarget));
+				var options = getoptions(),
+					el;
+
+				for (i = options.length; i--;) {
+					if (options[i] === evt.target || neon.select(options[i]).contains(evt.target)) {
+						updateselection(i);
+						select(neon.select(options[i]));
+					}
+				}
 			};
 
 			var onblur = function() {
@@ -788,19 +801,21 @@ neon.widget = (function() {
 			var onmouseleave = selectnone;
 
 			var onkeydown = function(evt) {
+				var options = getoptions();
+
 				// arrow keys
 				if (evt.which >= 37 && evt.which <= 40) {
 					updateselection(
 						evt.which >= 39 ?
-							(currentsel === null || currentsel === options.length - 1 ? 0 :
+							(currentsel === null || currentsel >= options.length - 1 ? 0 :
 								currentsel + 1) :
-							(currentsel ? currentsel - 1 : options.length - 1)
+							(currentsel ? (currentsel <= options.length ? currentsel - 1 : options.length) : options.length - 1)
 						);
 					evt.preventDefault();
 					evt.stopPropagation();
 				}
 				if (evt.which === 32 || evt.which === 13) {
-					if (currentsel !== null) {
+					if (currentsel !== null && currentsel < options.length) {
 						select(neon.select(options[currentsel]));
 						evt.preventDefault();
 						evt.stopPropagation();
@@ -814,19 +829,16 @@ neon.widget = (function() {
 				.addClass('neon-widget-flyoutMenu');
 			flyouts.push(flyout[0]);
 			host = neon.select(flyout[0].parentNode);
-			options = neon.select(flyout[0].getElementsByTagName(myopts.optiontag || "a"))
-				//.setAttribute('tabindex', '-1')
-				.addClass('neon-widget-flyoutMenu-item');
 
 			host.watch('keydown', onkeydown);
 			flyout.watch('mouseleave', onmouseleave);
-			options.watch('mouseenter', onmouseenter);
-			options.watch('click', onclick);
+			flyout.watch('mouseover', onmouseover);
+			flyout.watch('click', onclick);
 			teardowns.push(function() {
 				host.unwatch('keydown', onkeydown);
-				options.unwatch('mouseenter', onmouseenter)
+				flyout.unwatch('mouseleave', onmouseleave)
+					.unwatch('mouseover', onmouseover)
 					.unwatch('click', onclick);
-				flyout.unwatch('mouseleave', onmouseleave);
 			});
 			
 		};
@@ -859,7 +871,7 @@ neon.widget = (function() {
 
 	neon.styleRule('.neon-widget-flyoutMenu',
 		'background:#fff;color:#000;min-width:8em')
-		.styleRule('.neon-widget-flyoutMenu-item',
+		.styleRule('.neon-widget-flyoutMenu a',
 			'display:block;text-decoration:none;color:MenuText;padding:3px 5px;cursor:default')
 		.styleRule('.neon-widget-flyoutMenu-selected',
 			'background:Highlight;color:HighlightText')
