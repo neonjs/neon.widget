@@ -665,7 +665,8 @@ neon.widget = (function() {
 				elements.unwatch('mousedown', onmousedown);
 			}
 			for (i = hosts.length; i--;) {
-				neon.select(hosts[i]).insert(hosts[i].firstChild).remove();
+				neon.select(hosts[i]).insert(hosts[i].firstChild);
+				neon.select(hosts[i]).remove();
 			}
 		};
 
