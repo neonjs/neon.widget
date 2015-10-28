@@ -713,7 +713,7 @@ neon.widget = (function() {
 		.styleRule('.neon-widget-flyout-hidden',
 			'display:none')
 		.styleRule('.neon-widget-flyout-host',
-			'position:relative;display:inline-block;outline:none;z-index:998');
+			'position:relative;display:inline-block;outline:none');
 	
 	/*******************************************
 	 *       FLYOUTMENU - DROP-DOWN MENU       *
