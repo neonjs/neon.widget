@@ -1,0 +1,94 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<title>Controls test</title>
+<style>
+html {
+	font-family: sans-serif;
+	font-size: small;
+	padding: 1em 6%;
+}
+table {
+	border-collapse: collapse;
+}
+td, th {
+	border: 1px solid #777;
+	padding: 2px 3px;
+}
+</style>
+<script type="text/javascript" src="../neonjs/neon.js"></script>
+<script type="text/javascript">
+
+neon.loaddir = '../neonjs/modules/';
+
+neon.load('../../neon.widget.js', function() {
+	
+	neon.ready(function() {
+
+		var flyoutmenu1 = neon.select('#flyoutmenu1').widget('flyoutMenu', {
+			contents: [
+				{a:'Option 1',$href:'#option1'},
+				{a:'Option 2',$href:'#option2'},
+				{a:'Option 3',$href:'#option3'},
+				],
+			onselect: function(el) {
+				neon.select('#flyoutmenu1')[0].value = el[0].innerText;
+			}
+		});
+
+		var flyoutmenu2 = neon.select('#flyoutmenu2').widget('flyoutMenu', {
+			hover: true,
+			contents: [
+				{a:'Option 1',$href:'#option1'},
+				{a:'Option 2',$href:'#option2',$id:'flyoutmenu3'},
+				{a:'Option 3',$href:'#option3'},
+				],
+			onselect: function(el) {
+				neon.select('#flyoutmenu2selected').empty().append(el[0].innerText + ' selected');
+			}
+		});
+
+		var flyoutmenu3 = neon.select('#flyoutmenu3').widget('flyoutMenu', {
+			hover: true,
+			direction: 'rb',
+			contents: [
+				{a:'Option 2.1',$href:'#option1'},
+				{a:'Option 2.2',$href:'#option2'},
+				{a:'Option 2.3',$href:'#option3'},
+				],
+			onselect: function(el) {
+				neon.select('#flyoutmenu2selected').empty().append(el[0].innerText + ' selected');
+			}
+		});
+	
+
+		neon.select("#teardownbutton").watch('click', function() {
+			flyoutmenu1.teardown();
+			flyoutmenu3.teardown();
+			flyoutmenu2.teardown();
+		});
+
+	});
+});
+
+</script>
+</head>
+
+<body>
+
+	<h1>Controls demonstration</h1>
+
+	<h2>Click based flyout menu</h2>
+
+	<p><input id="flyoutmenu1" type="text" value=""></p>
+
+	<h2>Hover based flyout menu</h2>
+
+	<p><span id="flyoutmenu2">Hover here</span> <span id="flyoutmenu2selected"></span></p>
+
+	<p><button id="teardownbutton">Teardown</button></p>
+
+</body>
+</html>
