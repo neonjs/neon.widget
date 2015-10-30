@@ -872,9 +872,9 @@ neon.widget = (function() {
 	neon.styleRule('.neon-widget-flyoutMenu',
 		'background:#fff;color:#000;min-width:8em')
 		.styleRule('.neon-widget-flyoutMenu a',
-			'display:block;text-decoration:none;color:MenuText;padding:3px 5px;cursor:default')
+			'display:block;text-decoration:none;color:#000;padding:3px 5px;cursor:default')
 		.styleRule('.neon-widget-flyoutMenu-selected',
-			'background:Highlight;color:HighlightText')
+			'background:#b9e0f9;color:#000')
 		.styleRule('.neon-widget-flyoutMenu ul, .neon-widget-flyoutMenu ol, .neon-widget-flyoutMenu li',
 			'list-style:none;padding:0;margin:0');
 
