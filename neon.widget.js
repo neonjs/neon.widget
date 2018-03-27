@@ -271,14 +271,6 @@ neon.widget = (function() {
 			// from this point, all accumulated text is treated as one block
 			// no breaking out from this point
 
-			// strip paragraphs?
-			if (strippara &&
-				(tag.name === 'p' || (tag.name === 'br' && topnotext)) &&
-				!tag.contents) {
-
-				tag.strip = true;
-			}
-
 			// calculate popen
 			popen = lasttag.isblock ? false :
 				lasttag.name !== 'p' ? popen :
@@ -301,16 +293,6 @@ neon.widget = (function() {
 
 			if (!prelayers) {
 
-				// ws to para
-				if (popen && wstopara) {
-					if (/\S\s*\n\s*$/.test(text)) {
-						needslinebreak = inlinecontext = false;
-						// cannot use inlinecontext after this point
-					}
-					text = text.replace(/\s*\n\r?\n\s*(?=\S)/g, '</p><p>')
-						.replace(/\s*\n\s*/g, '<br>');
-				}
-
 				// remove leading spaces
 				if (lasttag.isblock ||
 					(!popen && topnotext) ||
@@ -330,15 +312,11 @@ neon.widget = (function() {
 			}
 
 			// convert < and & where it is not part of tag or entity
-			text = strippara ?
-				text.replace(/&lt;(?![\/\w!])/g, '<').replace(/&amp;(?![\w#])/g, '&') :
+			text =
 				text.replace(/<(?![\/\w!])/g, '&lt;').replace(/&(?![\w#])/g, '&amp;');
 
 			// account for added para tags
-			if (strippara) {
-				text = text.replace(/<\/?\w+>/g, "\n");
-			}
-			else if (!prelayers) {
+			if (!prelayers) {
 				text = text.replace(/<p>/g, "\n<p>").replace(/<\/p>/g, "</p>\n")
 					.replace(/<br>/g, "<br>\n");
 			}
@@ -883,19 +861,11 @@ neon.widget = (function() {
 	 *******************************************/
 
 	widgets.richtext = function(el, opts) {
+    // now requires proper contentEditable support in the browser - this is true of
+    // virtually all current browsers except Opera Mini
 		var
 			i,
 			myopts = opts || {},
-			// detect if the browser allows contenteditable properly
-			// can't use isContentEditible as there are older (pre 4.0)
-			// firefox versions that support contenteditable but not this property
-			// also, we need to exclude webkit 528 to 534.2 on mobile because
-			// they claim to support contentEditable but it doesn't actually work
-			// (fixed in Android 4/iOS 5)
-			canedit = document.body.contentEditable !== undefined &&
-				(!/\b(Apple)?WebKit\/(52|53[0-3]|534\.[0-2])/.test(navigator.userAgent) ||
-					(!/\bMobile\//.test(navigator.userAgent) &&
-					!/\bMobile Safari\//.test(navigator.userAgent))),
 			container = el.insert({div:''})
 				.addClass('neon-widget-richtext'),
 			iconsize = myopts.iconsize || 14,
@@ -911,12 +881,12 @@ neon.widget = (function() {
 				original = neon.select(container[0].nextSibling),
 				toolbar = container.append({div:''})
 					.addClass('neon-widget-richtext-toolbar'),
-				editor = container.append(canedit ? {div:''} : {textarea:''})
+				editor = container.append({div:''})
 					.addClass('neon-widget-richtext-editor'),
-				htmltoolbar = canedit && myopts.htmlmode ? container.append({div:''})
+				htmltoolbar = myopts.htmlmode ? container.append({div:''})
 					.style('display', 'none')
 					.addClass('neon-widget-richtext-toolbar') : null,
-				htmleditor = canedit && myopts.htmlmode ?
+				htmleditor = myopts.htmlmode ?
 					container.append({textarea:''})
 					.style('display', 'none')
 					.addClass('neon-widget-richtext-editor') : null,
@@ -1657,19 +1627,15 @@ neon.widget = (function() {
 			obj.getvalue = function() {
 				return htmlconvert(
 					htmlmode ? htmleditor[0].value :
-					canedit ? editor[0].innerHTML :
-					editor[0].value, 0, !htmlmode && !canedit);
+					editor[0].innerHTML);
 			};
 
 			obj.setvalue = function(value) {
 				if (htmlmode) {
 					htmleditor[0].value = htmlconvert(value);
 				}
-				else if (canedit) {
-					editor[0].innerHTML = htmlconvert(value);
-				}
 				else {
-					editor[0].value = htmlconvert(value, 1);
+					editor[0].innerHTML = htmlconvert(value);
 				}
 			};
 
@@ -1683,64 +1649,58 @@ neon.widget = (function() {
 
 			// now populate the toolbar
 
-			if (!canedit) {
-				toolbar.append({div:"HTML tags accepted"})
-					.addClass('neon-widget-richtext-toolbar-altnotice');
-			}
-			else {
-				if (myopts.stylechooser) {
-					addstylechooser();
-					addseparator();
-				}
-				addcommandbutton('bold', 0, 'Bold');
-				addcommandbutton('italic', 1, 'Italic');
-				if (myopts.listbuttons || myopts.listbuttons === undefined) {
-					addseparator();
-					addcommandbutton('insertunorderedlist', 2, 'Bulleted list');
-					addcommandbutton('insertorderedlist', 3, 'Numbered list');
-				}
-				if (myopts.indentbuttons || myopts.indentbuttons === undefined) {
-					addseparator();
-					addcommandbutton('outdent', 4, 'Decrease indent');
-					addcommandbutton('indent', 5, 'Increase indent');
-				}
-				if (myopts.linkchooser || myopts.linkchooser === undefined ||
-					myopts.imagechooser || myopts.tablecreator) {
-					addseparator();
-					if (myopts.linkchooser || myopts.linkchooser === undefined) {
-						addlinkchooser();
-					}
-					if (myopts.imagechooser) {
-						addimagechooser();
-					}
-					if (myopts.tablechooser) {
-						addtablechooser();
-					}
-				}
+      if (myopts.stylechooser) {
+        addstylechooser();
+        addseparator();
+      }
+      addcommandbutton('bold', 0, 'Bold');
+      addcommandbutton('italic', 1, 'Italic');
+      if (myopts.listbuttons || myopts.listbuttons === undefined) {
+        addseparator();
+        addcommandbutton('insertunorderedlist', 2, 'Bulleted list');
+        addcommandbutton('insertorderedlist', 3, 'Numbered list');
+      }
+      if (myopts.indentbuttons || myopts.indentbuttons === undefined) {
+        addseparator();
+        addcommandbutton('outdent', 4, 'Decrease indent');
+        addcommandbutton('indent', 5, 'Increase indent');
+      }
+      if (myopts.linkchooser || myopts.linkchooser === undefined ||
+        myopts.imagechooser || myopts.tablecreator) {
+        addseparator();
+        if (myopts.linkchooser || myopts.linkchooser === undefined) {
+          addlinkchooser();
+        }
+        if (myopts.imagechooser) {
+          addimagechooser();
+        }
+        if (myopts.tablechooser) {
+          addtablechooser();
+        }
+      }
 
-				if (myopts.htmlmode) {
-					addseparator();
-					addhtmlbutton();
-				}
+      if (myopts.htmlmode) {
+        addseparator();
+        addhtmlbutton();
+      }
 
-				// strangely in IE6 (and 7?) the following capital E is important
-				editor.setAttribute('contentEditable', 'true');
-				editor.watch('keyup', updateevent);
-				editor.watch('keypress', onkeypress);
-				editor.watch('mouseup', updateevent);
-				editor.watch('mouseleave', updateevent);
-				editor.watch('paste', onpaste);
-				toolbar.watch('mousedown', getrange);
+      // strangely in IE6 (and 7?) the following capital E is important
+      editor.setAttribute('contentEditable', 'true');
+      editor.watch('keyup', updateevent);
+      editor.watch('keypress', onkeypress);
+      editor.watch('mouseup', updateevent);
+      editor.watch('mouseleave', updateevent);
+      editor.watch('paste', onpaste);
+      toolbar.watch('mousedown', getrange);
 
-				teardowns.push(function() {
-					editor.unwatch('keyup', updateevent)
-						.unwatch('keypress', onkeypress)
-						.unwatch('mouseup', updateevent)
-						.unwatch('mouseleave', updateevent)
-						.unwatch('paste', onpaste);
-					toolbar.unwatch('mousedown', getrange);
-				});
-			}
+      teardowns.push(function() {
+        editor.unwatch('keyup', updateevent)
+          .unwatch('keypress', onkeypress)
+          .unwatch('mouseup', updateevent)
+          .unwatch('mouseleave', updateevent)
+          .unwatch('paste', onpaste);
+        toolbar.unwatch('mousedown', getrange);
+      });
 
 			if (original[0].tagName.toLowerCase() === 'textarea') {
 				source = original[0].value;
@@ -1770,12 +1730,10 @@ neon.widget = (function() {
 				container.insert(original);
 			});
 
-			editor[0][canedit ? 'innerHTML' : 'value'] =
-				htmlconvert(source, !canedit, 0);
+			editor[0].innerHTML =
+				htmlconvert(source);
 
-			if (canedit) {
-				getrange();
-			}
+      getrange();
 			updatecontrols();
 
 			return obj;
@@ -1837,8 +1795,6 @@ neon.widget = (function() {
 	// min-height needed as textareas don't auto-expand
 		.styleRule('textarea.neon-widget-richtext-editor',
 			'width:100%;border:0;padding:0;margin:0;min-height:14em')
-		.styleRule('.neon-widget-richtext-toolbar-altnotice',
-			'padding:5px;text-align:right;font:italic 12px sans-serif')
 		.styleRule('.neon-widget-richtext-dialog',
 			'background:#f9f6f3;padding:5px;margin:0;font:12px sans-serif')
 		.styleRule('.neon-widget-richtext-dialog h2',
