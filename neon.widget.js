@@ -714,7 +714,7 @@ neon.widget = (function() {
 			var
 				i,
 				obj,
-				flyout, host, options,
+				flyout, host,
 				currentsel = null;
 
 			var getoptions = function() {
@@ -747,8 +747,7 @@ neon.widget = (function() {
 			};
 
 			var onmouseover = function(evt) {
-				var options = getoptions(),
-					el;
+				var options = getoptions();
 
 				for (i = options.length; i--;) {
 					if (options[i] === evt.target || neon.select(options[i]).contains(evt.target)) {
@@ -758,8 +757,7 @@ neon.widget = (function() {
 			};
 
 			var onclick = function(evt) {
-				var options = getoptions(),
-					el;
+				var options = getoptions();
 
 				for (i = options.length; i--;) {
 					if (options[i] === evt.target || neon.select(options[i]).contains(evt.target)) {
@@ -895,7 +893,8 @@ neon.widget = (function() {
 				savedselection = null, savedelements,
 				hiddenfield, form,
 				obj = {},
-				updators = [];
+				updators = [],
+        updatepending = null;
 
 			var getrange = function() {
 				var
@@ -1118,14 +1117,26 @@ neon.widget = (function() {
 			};
 
 			var updateevent = function(evt) {
-				if ((evt.which < 65 && evt.which !== 32 &&
-					(evt.which < 16 || evt.which > 20)) ||
-					evt.which > 122 || evt.ctrlKey) {
-					setTimeout(function() {
-						getrange();
-						updatecontrols();
-					}, 0);
-				}
+        if ((evt.which < 65 && evt.which !== 32 &&
+          (evt.which < 16 || evt.which > 20)) ||
+          evt.which > 122 || evt.ctrlKey) {
+          // higher priority update, anything which could alter tree
+
+          setTimeout(function() {
+            if (updatepending) {
+              clearTimeout(updatepending);
+              updatepending = false;
+            }
+            getrange();
+            updatecontrols();
+          }, 0);
+        } else if (!updatepending) {
+          // lower priority update, just typing text
+          updatepending = setTimeout(function() {
+            updatepending = null;
+            updatecontrols();
+          }, 400);
+        }
 			};
 
 			var geticon = function(iconnum) {
@@ -1210,6 +1221,14 @@ neon.widget = (function() {
 				toolbar.append({span:''})
 					.addClass('neon-widget-richtext-toolbar-separator');
 			};
+
+      var addcharactercount = function() {
+        var charcount;
+        charcount = toolbar.append({span:null,$class:'neon-widget-richtext-toolbar-static',$title:'Character count'});
+        updators.push(function() {
+          charcount.empty().append(editor[0].innerText.replace(/\s\s+/g, ' ').trim().length+'C');
+        });
+      };
 
 			var addhtmlbutton = function() {
 				var
@@ -1684,6 +1703,11 @@ neon.widget = (function() {
         addhtmlbutton();
       }
 
+      if (myopts.charactercount) {
+        addseparator();
+        addcharactercount();
+      }
+
       // strangely in IE6 (and 7?) the following capital E is important
       editor.setAttribute('contentEditable', 'true');
       editor.watch('keyup', updateevent);
@@ -1771,6 +1795,8 @@ neon.widget = (function() {
 			'outline:1px dotted #84a1b4')
 		.styleRule('.neon-widget-richtext-toolbar-styleelement',
 			'margin:0;padding:0;white-space:nowrap')
+    .styleRule('.neon-widget-richtext-toolbar-static',
+      'display:inline-block;padding:5px;vertical-align:middle;line-height:110%;min-height:14px;font:12px sans-serif')
 		.styleRule('.neon-widget-richtext-toolbar-separator',
 			'display:inline-block;width:0;height:12px;margin:5px;border-left:1px solid #dfdcd9;vertical-align:middle;line-height:0')
 		.styleRule('.neon-widget-richtext-editor',
